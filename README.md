@@ -10,18 +10,17 @@ MVP Telegram Mini App для онлайн-записи к барберу.
 Browser / Telegram WebView
         │
         ▼
-   Frontend (React + Vite)
-        │  REST /api/*
-        ▼
-   Backend (Express + TypeScript)
+   Single service (Express)
+   ├── /           React static
+   └── /api/*      REST API
         │
         ▼
-   SQLite (better-sqlite3)
+   SQLite (persistent volume)
 ```
 
 - Frontend и backend — отдельные пакеты в npm workspaces.
-- В Docker frontend отдаётся через nginx и проксирует `/api` на backend.
-- В локальном `npm run dev` Vite proxy направляет `/api` на `localhost:3000`.
+- В production (Railway / root Dockerfile) один сервис отдаёт UI и API.
+- Локально: `npm run dev` (Vite + API) или `docker compose` (nginx + API).
 - Auth: Telegram `initData` (HMAC-SHA256). В demo mode без Telegram используется тестовый клиент.
 
 ## Стек
@@ -127,6 +126,8 @@ telegram-booking-miniapp/
 │   │   └── styles.css
 │   ├── nginx.conf
 │   └── Dockerfile
+├── Dockerfile          # single-service production image
+├── railway.toml
 ├── docker-compose.yml
 ├── .env.example
 └── README.md
@@ -174,12 +175,34 @@ npm run test        # vitest (booking logic)
 
 ## Deployment notes
 
-Для Railway / Render / Fly.io:
+### Railway (рекомендуется для demo)
 
-1. Backend service: build `backend`, start `node dist/index.js`, persistent volume для `DATABASE_PATH`.
-2. Frontend: static build + reverse proxy `/api` → backend **или** задать `VITE_API_URL` на публичный API URL.
-3. HTTPS обязателен для Telegram Mini App.
-4. Выставить `TELEGRAM_BOT_TOKEN`, `APP_URL`, `ALLOW_DEMO_MODE=false`, `TZ`.
-5. SQLite на ephemeral filesystem без volume потеряет данные — нужен volume/disk.
+Один сервис из корневого `Dockerfile` + `railway.toml`:
 
-Production deployment в этом MVP не настраивался.
+1. Подключить GitHub repo `telegram-booking-miniapp`.
+2. Build: Dockerfile (root).
+3. Volume: mount path `/data`, переменная `DATABASE_PATH=/data/booking.db`.
+4. Env:
+   - `NODE_ENV=production`
+   - `DATABASE_PATH=/data/booking.db`
+   - `ALLOW_DEMO_MODE=true` (для browser demo)
+   - `APP_URL=https://<your-railway-domain>`
+   - `TZ=Europe/Moscow`
+   - `TELEGRAM_BOT_TOKEN=` (опционально до подключения бота)
+5. Healthcheck: `GET /api/health`.
+6. После выдачи публичного HTTPS URL обновить `APP_URL`.
+
+Redeploy не должен удалять записи, пока volume смонтирован на `/data`.
+
+### Локальный single-service Docker
+
+```bash
+DOCKER_HOST=unix:///var/run/docker.sock docker build -t booking-demo .
+DOCKER_HOST=unix:///var/run/docker.sock docker run --rm -p 3000:3000 \
+  -e ALLOW_DEMO_MODE=true \
+  -e APP_URL=http://localhost:3000 \
+  -v booking_data:/data \
+  booking-demo
+```
+
+HTTPS обязателен для Telegram Mini App.
