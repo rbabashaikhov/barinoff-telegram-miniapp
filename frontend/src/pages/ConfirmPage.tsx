@@ -62,14 +62,16 @@ export function ConfirmPage() {
 
       {error && <div className="error-box">{error}</div>}
 
-      <button
-        type="button"
-        className="btn btn-primary btn-block"
-        disabled={submitting}
-        onClick={onConfirm}
-      >
-        {submitting ? 'Создаём…' : 'Подтвердить запись'}
-      </button>
+      <div className="sticky-cta">
+        <button
+          type="button"
+          className="btn btn-primary btn-block"
+          disabled={submitting}
+          onClick={onConfirm}
+        >
+          {submitting ? 'Создаём…' : 'Подтвердить запись'}
+        </button>
+      </div>
     </div>
   );
 }

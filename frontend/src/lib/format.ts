@@ -54,3 +54,7 @@ export function weekdayShort(weekday: number): string {
 export function dayNumber(dateStr: string): string {
   return String(Number(dateStr.split('-')[2]));
 }
+
+export function formatStatus(status: 'confirmed' | 'cancelled'): string {
+  return status === 'confirmed' ? 'Подтверждена' : 'Отменена';
+}

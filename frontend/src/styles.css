@@ -1,15 +1,19 @@
 :root {
   --bg: #12110f;
-  --bg-elevated: #1c1a17;
-  --bg-soft: #24211c;
-  --line: rgba(232, 220, 198, 0.12);
-  --text: #f4efe6;
-  --text-muted: #a89f90;
+  --bg-elevated: #221f1a;
+  --bg-soft: #2c2822;
+  --line: rgba(232, 220, 198, 0.2);
+  --line-strong: rgba(232, 220, 198, 0.34);
+  --text: #f6f1e8;
+  --text-secondary: #ddd2c2;
+  --text-muted: #c2b6a4;
   --accent: #d4a574;
-  --accent-strong: #e0b888;
-  --accent-dim: rgba(212, 165, 116, 0.14);
-  --danger: #d9796b;
-  --success: #8fbf8a;
+  --accent-strong: #e8c08a;
+  --accent-dim: rgba(212, 165, 116, 0.18);
+  --danger: #e08a7c;
+  --danger-dim: rgba(224, 138, 124, 0.12);
+  --success: #9dcb97;
+  --success-dim: rgba(157, 203, 151, 0.14);
   --radius: 18px;
   --radius-sm: 12px;
   --shadow: 0 18px 40px rgba(0, 0, 0, 0.35);
@@ -74,17 +78,24 @@ button {
   display: flex;
   flex-direction: column;
   gap: 20px;
-  animation: fadeUp 0.35s ease both;
+  flex: 1;
+  /* Transform-only: never animate opacity on whole screens (was crushing contrast). */
+  animation: riseIn 0.32s ease both;
 }
 
-@keyframes fadeUp {
+@keyframes riseIn {
   from {
-    opacity: 0;
-    transform: translateY(10px);
+    transform: translateY(8px);
   }
   to {
-    opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page,
+  .success-hero .check {
+    animation: none;
   }
 }
 
@@ -94,6 +105,7 @@ button {
   line-height: 1;
   letter-spacing: 0.01em;
   margin: 0;
+  color: var(--text);
 }
 
 .eyebrow {
@@ -116,6 +128,7 @@ button {
   margin: 0;
   font-size: 1.05rem;
   font-weight: 600;
+  color: var(--text);
 }
 
 .stack {
@@ -140,29 +153,42 @@ button {
   padding: 0 20px;
   border-radius: 999px;
   font-weight: 600;
-  transition: transform 0.15s ease, background 0.15s ease, border-color 0.15s ease;
+  transition:
+    transform 0.15s ease,
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease,
+    box-shadow 0.15s ease;
 }
 
-.btn:active {
+.btn:active:not(:disabled) {
   transform: scale(0.98);
-}
-
-.btn:disabled {
-  opacity: 0.45;
-  cursor: not-allowed;
-  transform: none;
 }
 
 .btn-primary {
   background: linear-gradient(135deg, var(--accent-strong), var(--accent));
   color: #1a140c;
-  box-shadow: 0 10px 24px rgba(212, 165, 116, 0.25);
+  box-shadow: 0 10px 24px rgba(212, 165, 116, 0.28);
+}
+
+.btn-primary:disabled {
+  background: #3a342c;
+  color: #8a8074;
+  box-shadow: none;
+  cursor: not-allowed;
+  transform: none;
 }
 
 .btn-secondary {
-  background: transparent;
-  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid var(--line-strong);
   color: var(--text);
+}
+
+.btn-secondary:disabled {
+  color: #7a7166;
+  border-color: var(--line);
+  cursor: not-allowed;
 }
 
 .btn-ghost {
@@ -173,8 +199,8 @@ button {
 
 .btn-danger {
   color: var(--danger);
-  border: 1px solid rgba(217, 121, 107, 0.35);
-  background: rgba(217, 121, 107, 0.08);
+  border: 1px solid rgba(224, 138, 124, 0.4);
+  background: var(--danger-dim);
   border-radius: 999px;
   min-height: 44px;
   padding: 0 16px;
@@ -189,7 +215,7 @@ button {
 .appointment-card,
 .summary-card,
 .admin-card {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.03), transparent 40%),
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 42%),
     var(--bg-elevated);
   border: 1px solid var(--line);
   border-radius: var(--radius);
@@ -199,18 +225,21 @@ button {
 .service-card {
   text-align: left;
   width: 100%;
-  transition: border-color 0.2s ease, background 0.2s ease;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
 }
 
 .service-card:hover,
 .service-card.selected {
-  border-color: rgba(212, 165, 116, 0.55);
+  border-color: rgba(212, 165, 116, 0.65);
   background: linear-gradient(180deg, var(--accent-dim), var(--bg-elevated));
+  box-shadow: 0 0 0 1px rgba(212, 165, 116, 0.12);
 }
 
 .service-card h3 {
   margin: 0 0 6px;
   font-size: 1.05rem;
+  color: var(--text);
+  font-weight: 650;
 }
 
 .service-card p {
@@ -224,36 +253,66 @@ button {
   display: flex;
   gap: 12px;
   margin-top: 14px;
-  color: var(--accent);
-  font-weight: 600;
-  font-size: 0.92rem;
+  color: var(--accent-strong);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.date-picker {
+  position: relative;
+}
+
+.date-picker::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 18px;
+  width: 36px;
+  pointer-events: none;
+  background: linear-gradient(90deg, transparent, rgba(18, 17, 15, 0.92));
+}
+
+.date-hint {
+  margin: 0 0 10px;
+  font-size: 0.8rem;
+  color: var(--text-muted);
 }
 
 .date-scroller {
   display: flex;
   gap: 10px;
   overflow-x: auto;
-  padding-bottom: 4px;
-  scrollbar-width: none;
+  padding: 2px 28px 10px 2px;
+  scroll-snap-type: x proximity;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(212, 165, 116, 0.35) transparent;
 }
 
 .date-scroller::-webkit-scrollbar {
-  display: none;
+  height: 4px;
+}
+
+.date-scroller::-webkit-scrollbar-thumb {
+  background: rgba(212, 165, 116, 0.35);
+  border-radius: 999px;
 }
 
 .date-chip {
   flex: 0 0 auto;
-  width: 72px;
-  min-height: 84px;
+  width: 74px;
+  min-height: 88px;
   border-radius: 16px;
-  border: 1px solid var(--line);
-  background: var(--bg-elevated);
+  border: 1px solid var(--line-strong);
+  background: var(--bg-soft);
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  transition: border-color 0.2s ease, background 0.2s ease;
+  scroll-snap-align: start;
+  transition: border-color 0.2s ease, background 0.2s ease, color 0.2s ease;
 }
 
 .date-chip .dow {
@@ -264,17 +323,54 @@ button {
 }
 
 .date-chip .dom {
-  font-size: 1.25rem;
+  font-size: 1.3rem;
   font-weight: 700;
+  color: var(--text);
 }
 
 .date-chip.selected {
   border-color: var(--accent);
   background: var(--accent-dim);
+  box-shadow: inset 0 0 0 1px rgba(212, 165, 116, 0.35);
+}
+
+.date-chip.selected .dow,
+.date-chip.selected .dom {
+  color: var(--accent-strong);
 }
 
 .date-chip:disabled {
-  opacity: 0.35;
+  opacity: 1;
+  background: transparent;
+  border-color: rgba(232, 220, 198, 0.1);
+  color: #6f675c;
+}
+
+.date-chip:disabled .dow,
+.date-chip:disabled .dom {
+  color: #6f675c;
+}
+
+.page-with-sticky {
+  padding-bottom: 88px;
+}
+
+.sticky-cta {
+  position: sticky;
+  bottom: calc(8px + var(--safe-bottom));
+  margin-top: auto;
+  padding-top: 12px;
+  background: linear-gradient(180deg, transparent, rgba(18, 17, 15, 0.92) 28%, rgba(18, 17, 15, 0.98));
+  z-index: 2;
+}
+
+.slots-scroll {
+  flex: 1;
+  min-height: 0;
+  max-height: calc(100dvh - 260px);
+  overflow-y: auto;
+  padding-bottom: 8px;
+  -webkit-overflow-scrolling: touch;
 }
 
 .slots-grid {
@@ -284,17 +380,20 @@ button {
 }
 
 .slot-btn {
-  min-height: 52px;
+  min-height: 48px;
   border-radius: var(--radius-sm);
-  border: 1px solid var(--line);
-  background: var(--bg-elevated);
+  border: 1px solid var(--line-strong);
+  background: var(--bg-soft);
+  color: var(--text);
   font-weight: 600;
+  font-size: 0.95rem;
 }
 
 .slot-btn.selected {
   border-color: var(--accent);
   background: var(--accent-dim);
   color: var(--accent-strong);
+  box-shadow: inset 0 0 0 1px rgba(212, 165, 116, 0.28);
 }
 
 .empty-state,
@@ -302,31 +401,33 @@ button {
 .error-box {
   padding: 20px;
   border-radius: var(--radius);
-  border: 1px dashed var(--line);
+  border: 1px dashed var(--line-strong);
   color: var(--text-muted);
   text-align: center;
 }
 
 .error-box {
   border-style: solid;
-  border-color: rgba(217, 121, 107, 0.4);
-  color: #f0c2bb;
-  background: rgba(217, 121, 107, 0.08);
+  border-color: rgba(224, 138, 124, 0.45);
+  color: #f3c7bf;
+  background: var(--danger-dim);
 }
 
 .demo-banner {
-  font-size: 0.78rem;
-  color: var(--accent);
-  background: var(--accent-dim);
-  border: 1px solid rgba(212, 165, 116, 0.25);
+  align-self: flex-start;
+  font-size: 0.72rem;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(232, 220, 198, 0.14);
   border-radius: 999px;
-  padding: 8px 12px;
-  text-align: center;
+  padding: 6px 10px;
 }
 
 .success-hero {
   text-align: center;
-  padding: 36px 12px 12px;
+  padding: 28px 12px 8px;
 }
 
 .success-hero .check {
@@ -336,8 +437,8 @@ button {
   border-radius: 50%;
   display: grid;
   place-items: center;
-  background: rgba(143, 191, 138, 0.12);
-  border: 1px solid rgba(143, 191, 138, 0.35);
+  background: var(--success-dim);
+  border: 1px solid rgba(157, 203, 151, 0.45);
   color: var(--success);
   font-size: 2rem;
   animation: pop 0.45s ease both;
@@ -345,22 +446,25 @@ button {
 
 @keyframes pop {
   from {
-    transform: scale(0.7);
-    opacity: 0;
+    transform: scale(0.85);
   }
   to {
     transform: scale(1);
-    opacity: 1;
   }
+}
+
+.summary-card .summary-row:last-child span:last-child {
+  color: var(--accent-strong);
+  font-weight: 700;
 }
 
 .summary-row {
   display: flex;
   justify-content: space-between;
   gap: 16px;
-  padding: 10px 0;
+  padding: 12px 0;
   border-bottom: 1px solid var(--line);
-  font-size: 0.95rem;
+  font-size: 0.98rem;
 }
 
 .summary-row:last-child {
@@ -368,7 +472,13 @@ button {
 }
 
 .summary-row span:first-child {
-  color: var(--text-muted);
+  color: var(--text-secondary);
+}
+
+.summary-row span:last-child {
+  color: var(--text);
+  font-weight: 600;
+  text-align: right;
 }
 
 .topbar {
@@ -380,12 +490,26 @@ button {
 
 .topbar h1 {
   margin: 0;
-  font-size: 1.15rem;
+  font-size: 1.2rem;
   font-weight: 650;
+  color: var(--text);
+}
+
+.appointment-card .appointment-price {
+  color: var(--accent-strong);
+  font-weight: 700;
+}
+
+.appointment-card.is-cancelled,
+.admin-card.is-cancelled {
+  opacity: 1;
+  border-color: rgba(224, 138, 124, 0.28);
+  background: linear-gradient(180deg, rgba(224, 138, 124, 0.06), transparent 50%),
+    var(--bg-elevated);
 }
 
 .admin-layout {
-  width: min(100%, 960px);
+  width: min(100%, 1080px);
   margin: 0 auto;
   padding: 24px 16px 40px;
 }
@@ -410,6 +534,7 @@ button {
   border-bottom: 1px solid var(--line);
   font-size: 0.9rem;
   vertical-align: top;
+  color: var(--text);
 }
 
 .admin-table th {
@@ -418,6 +543,16 @@ button {
   font-size: 0.78rem;
   text-transform: uppercase;
   letter-spacing: 0.06em;
+}
+
+.admin-table tr.is-cancelled td {
+  color: var(--text-muted);
+  background: rgba(224, 138, 124, 0.05);
+}
+
+.admin-cards {
+  display: none;
+  margin-top: 16px;
 }
 
 .status-pill {
@@ -430,12 +565,12 @@ button {
 }
 
 .status-pill.confirmed {
-  background: rgba(143, 191, 138, 0.12);
+  background: var(--success-dim);
   color: var(--success);
 }
 
 .status-pill.cancelled {
-  background: rgba(217, 121, 107, 0.12);
+  background: var(--danger-dim);
   color: var(--danger);
 }
 
@@ -464,5 +599,17 @@ button {
 @media (min-width: 768px) {
   .app-shell {
     padding-top: 32px;
+  }
+}
+
+@media (max-width: 720px) {
+  .admin-table-wrap {
+    display: none;
+  }
+
+  .admin-cards {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
   }
 }

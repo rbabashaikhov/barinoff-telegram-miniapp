@@ -1,8 +1,22 @@
 import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
-import { formatPrice } from '../lib/format';
+import { formatPrice, formatStatus } from '../lib/format';
 import type { Appointment } from '../types';
+
+function clientName(item: Appointment): string {
+  return (
+    item.client.name ||
+    [item.client.firstName, item.client.lastName].filter(Boolean).join(' ') ||
+    '—'
+  );
+}
+
+function telegramLabel(item: Appointment): string {
+  return item.client.username
+    ? `@${item.client.username}`
+    : String(item.client.telegramUserId);
+}
 
 export function AdminPage() {
   const [items, setItems] = useState<Appointment[]>([]);
@@ -45,74 +59,79 @@ export function AdminPage() {
       {error && <div className="error-box">{error}</div>}
 
       {!loading && !error && (
-        <div className="admin-table-wrap">
-          <table className="admin-table">
-            <thead>
-              <tr>
-                <th>Дата</th>
-                <th>Время</th>
-                <th>Клиент</th>
-                <th>Telegram</th>
-                <th>Услуга</th>
-                <th>Стоимость</th>
-                <th>Статус</th>
-              </tr>
-            </thead>
-            <tbody>
-              {items.length === 0 && (
+        <>
+          <div className="admin-table-wrap">
+            <table className="admin-table">
+              <thead>
                 <tr>
-                  <td colSpan={7} className="muted">
-                    Записей пока нет
-                  </td>
+                  <th>Дата</th>
+                  <th>Время</th>
+                  <th>Клиент</th>
+                  <th>Telegram</th>
+                  <th>Услуга</th>
+                  <th>Стоимость</th>
+                  <th>Статус</th>
                 </tr>
-              )}
-              {items.map((item) => {
-                const name =
-                  item.client.name ||
-                  [item.client.firstName, item.client.lastName].filter(Boolean).join(' ') ||
-                  '—';
-                const tg = item.client.username
-                  ? `@${item.client.username}`
-                  : String(item.client.telegramUserId);
-                return (
-                  <tr key={item.id}>
+              </thead>
+              <tbody>
+                {items.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="muted">
+                      Записей пока нет
+                    </td>
+                  </tr>
+                )}
+                {items.map((item) => (
+                  <tr
+                    key={item.id}
+                    className={item.status === 'cancelled' ? 'is-cancelled' : undefined}
+                  >
                     <td>{item.date}</td>
                     <td>
                       {item.startTime}–{item.endTime}
                     </td>
-                    <td>{name}</td>
-                    <td>{tg}</td>
+                    <td>{clientName(item)}</td>
+                    <td>{telegramLabel(item)}</td>
                     <td>{item.service.name}</td>
                     <td>{formatPrice(item.service.price)}</td>
                     <td>
                       <span className={`status-pill ${item.status}`}>
-                        {item.status === 'confirmed' ? 'confirmed' : 'cancelled'}
+                        {formatStatus(item.status)}
                       </span>
                     </td>
                   </tr>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
+                ))}
+              </tbody>
+            </table>
+          </div>
 
-      {/* Mobile-friendly cards */}
-      <div className="stack" style={{ marginTop: 16 }}>
-        {items.map((item) => (
-          <article key={`m-${item.id}`} className="admin-card" style={{ display: 'none' }}>
-            <div className="row">
-              <strong>
-                {item.date} · {item.startTime}
-              </strong>
-              <span className={`status-pill ${item.status}`}>{item.status}</span>
-            </div>
-            <p className="muted" style={{ margin: '8px 0 0' }}>
-              {item.service.name} · {formatPrice(item.service.price)}
-            </p>
-          </article>
-        ))}
-      </div>
+          <div className="admin-cards">
+            {items.length === 0 && <div className="empty-state">Записей пока нет</div>}
+            {items.map((item) => (
+              <article
+                key={`m-${item.id}`}
+                className={`admin-card${item.status === 'cancelled' ? ' is-cancelled' : ''}`}
+              >
+                <div className="row">
+                  <strong>
+                    {item.date} · {item.startTime}–{item.endTime}
+                  </strong>
+                  <span className={`status-pill ${item.status}`}>
+                    {formatStatus(item.status)}
+                  </span>
+                </div>
+                <p className="muted" style={{ margin: '8px 0 0' }}>
+                  {clientName(item)} · {telegramLabel(item)}
+                </p>
+                <p style={{ margin: '6px 0 0' }}>
+                  {item.service.name}
+                  <span className="appointment-price"> · {formatPrice(item.service.price)}</span>
+                </p>
+              </article>
+            ))}
+          </div>
+        </>
+      )}
     </div>
   );
 }

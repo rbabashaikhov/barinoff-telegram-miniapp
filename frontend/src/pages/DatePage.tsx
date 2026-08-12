@@ -40,38 +40,43 @@ export function DatePage() {
   return (
     <div className="page">
       <TopBar title="Дата" backTo="/services" />
-      <p className="lead">
-        {service.name} · выберите день
-      </p>
+      <p className="lead">{service.name} · выберите день</p>
 
       {loading && <div className="loading">Загрузка дат…</div>}
       {error && <div className="error-box">{error}</div>}
 
       {!loading && !error && (
-        <div className="date-scroller">
-          {calendar.map((day) => (
-            <button
-              key={day.date}
-              type="button"
-              className={`date-chip${date === day.date ? ' selected' : ''}`}
-              disabled={!day.available}
-              onClick={() => setDate(day.date)}
-            >
-              <span className="dow">{weekdayShort(day.weekday)}</span>
-              <span className="dom">{dayNumber(day.date)}</span>
-            </button>
-          ))}
+        <div className="date-picker">
+          <p className="date-hint">Листайте даты вправо →</p>
+          <div className="date-scroller" role="listbox" aria-label="Доступные даты">
+            {calendar.map((day) => (
+              <button
+                key={day.date}
+                type="button"
+                role="option"
+                aria-selected={date === day.date}
+                className={`date-chip${date === day.date ? ' selected' : ''}`}
+                disabled={!day.available}
+                onClick={() => setDate(day.date)}
+              >
+                <span className="dow">{weekdayShort(day.weekday)}</span>
+                <span className="dom">{dayNumber(day.date)}</span>
+              </button>
+            ))}
+          </div>
         </div>
       )}
 
-      <button
-        type="button"
-        className="btn btn-primary btn-block"
-        disabled={!date}
-        onClick={() => navigate('/booking/time')}
-      >
-        Далее
-      </button>
+      <div className="sticky-cta">
+        <button
+          type="button"
+          className="btn btn-primary btn-block"
+          disabled={!date}
+          onClick={() => navigate('/booking/time')}
+        >
+          Далее
+        </button>
+      </div>
     </div>
   );
 }

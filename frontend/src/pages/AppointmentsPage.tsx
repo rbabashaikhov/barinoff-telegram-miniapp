@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import { TopBar } from '../components/TopBar';
-import { formatDateFull, formatPrice } from '../lib/format';
+import { formatDateFull, formatPrice, formatStatus } from '../lib/format';
 import type { Appointment } from '../types';
 
 export function AppointmentsPage() {
@@ -59,18 +59,22 @@ export function AppointmentsPage() {
 
       <div className="stack">
         {items.map((item) => (
-          <article key={item.id} className="appointment-card">
+          <article
+            key={item.id}
+            className={`appointment-card${item.status === 'cancelled' ? ' is-cancelled' : ''}`}
+          >
             <div className="row">
               <strong>{item.service.name}</strong>
-              <span className={`status-pill ${item.status}`}>
-                {item.status === 'confirmed' ? 'подтверждена' : 'отменена'}
-              </span>
+              <span className={`status-pill ${item.status}`}>{formatStatus(item.status)}</span>
             </div>
             <p className="muted" style={{ margin: '8px 0 0' }}>
               {formatDateFull(item.date)}
             </p>
-            <p className="muted" style={{ margin: '4px 0 0' }}>
-              {item.startTime}–{item.endTime} · {formatPrice(item.service.price)}
+            <p style={{ margin: '6px 0 0' }}>
+              <span className="muted">
+                {item.startTime}–{item.endTime}
+              </span>
+              <span className="appointment-price"> · {formatPrice(item.service.price)}</span>
             </p>
             {item.status === 'confirmed' && (
               <div style={{ marginTop: 14 }}>

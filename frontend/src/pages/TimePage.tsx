@@ -37,7 +37,7 @@ export function TimePage() {
   }
 
   return (
-    <div className="page">
+    <div className="page page-with-sticky">
       <TopBar title="Время" backTo="/booking/date" />
       <p className="lead">{formatDateFull(date)}</p>
 
@@ -47,27 +47,33 @@ export function TimePage() {
         <div className="empty-state">На этот день свободных слотов нет</div>
       )}
 
-      <div className="slots-grid">
-        {slots.map((slot) => (
-          <button
-            key={slot}
-            type="button"
-            className={`slot-btn${startTime === slot ? ' selected' : ''}`}
-            onClick={() => setStartTime(slot)}
-          >
-            {slot}
-          </button>
-        ))}
-      </div>
+      {!loading && slots.length > 0 && (
+        <div className="slots-scroll">
+          <div className="slots-grid">
+            {slots.map((slot) => (
+              <button
+                key={slot}
+                type="button"
+                className={`slot-btn${startTime === slot ? ' selected' : ''}`}
+                onClick={() => setStartTime(slot)}
+              >
+                {slot}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
 
-      <button
-        type="button"
-        className="btn btn-primary btn-block"
-        disabled={!startTime}
-        onClick={() => navigate('/booking/confirm')}
-      >
-        Далее
-      </button>
+      <div className="sticky-cta">
+        <button
+          type="button"
+          className="btn btn-primary btn-block"
+          disabled={!startTime}
+          onClick={() => navigate('/booking/confirm')}
+        >
+          Далее
+        </button>
+      </div>
     </div>
   );
 }

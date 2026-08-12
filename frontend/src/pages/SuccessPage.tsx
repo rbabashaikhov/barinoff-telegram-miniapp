@@ -1,8 +1,8 @@
+import { useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useBooking } from '../context/BookingContext';
 import { formatDateFull, formatPrice } from '../lib/format';
 import type { Appointment } from '../types';
-import { useEffect } from 'react';
 
 export function SuccessPage() {
   const location = useLocation();
@@ -16,7 +16,9 @@ export function SuccessPage() {
   return (
     <div className="page">
       <div className="success-hero">
-        <div className="check">✓</div>
+        <div className="check" aria-hidden>
+          ✓
+        </div>
         <h1 className="brand" style={{ fontSize: '2rem' }}>
           Запись подтверждена
         </h1>
@@ -46,12 +48,14 @@ export function SuccessPage() {
         </div>
       )}
 
-      <Link className="btn btn-primary btn-block" to="/appointments">
-        Мои записи
-      </Link>
-      <Link className="btn btn-secondary btn-block" to="/">
-        На главную
-      </Link>
+      <div className="stack" style={{ marginTop: 8 }}>
+        <Link className="btn btn-primary btn-block" to="/appointments">
+          Мои записи
+        </Link>
+        <Link className="btn btn-secondary btn-block" to="/">
+          На главную
+        </Link>
+      </div>
     </div>
   );
 }

@@ -32,7 +32,9 @@ export function HomePage() {
   return (
     <div className="page">
       {isDemo && (
-        <div className="demo-banner">Demo mode · клиент {user.firstName || user.username}</div>
+        <div className="demo-banner">
+          Demo mode · Клиент {user.firstName || user.username}
+        </div>
       )}
 
       <section className="hero-block">
