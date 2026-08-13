@@ -168,7 +168,7 @@ DOCKER_HOST=unix:///var/run/docker.sock docker compose up --build
 | `BUSINESS_TYPE` | no | Eyebrow / vertical label |
 | `APP_TITLE` | no | Document title |
 | `APP_DESCRIPTION` | no | Home lead text |
-| `ADMIN_TOKEN` | client prod | Protects `/admin` and `/api/admin/*` |
+| `ADMIN_TOKEN` | Protects `/api/admin`. Required in production; empty token **locks** admin there. Local/dev may leave it empty for an open console |
 | `CRM_ADAPTER` | no | `local` (default), `webhook`, `mock` |
 | `CRM_WEBHOOK_URL` | if webhook | Destination URL |
 | `CRM_WEBHOOK_SECRET` | recommended | HMAC + Bearer |
@@ -183,8 +183,8 @@ Never commit `.env`. Secrets are not sent to the frontend.
 
 `/admin` is an operational console: appointments with filters, masters, services, working hours, blocked slots.
 
-- Demo: `ADMIN_TOKEN` empty → public (acceptable for the public demo).
-- Client-ready: set `ADMIN_TOKEN` and open `/admin`, paste the token. Requests send `x-admin-token`.
+- Local/dev: `ADMIN_TOKEN` empty → public console (convenience only).
+- Production: empty `ADMIN_TOKEN` **locks** `/api/admin` (`401`). Set a token, open `/admin`, paste it. Requests send `x-admin-token`.
 
 ## Telegram Mini App
 
@@ -231,7 +231,7 @@ Root `Dockerfile` + `railway.toml`, one service:
 
 1. Connect GitHub repo `telegram-booking-miniapp`.
 2. Volume mount `/data`, `DATABASE_PATH=/data/booking.db`.
-3. Env: `NODE_ENV=production`, `APP_URL`, `TZ`, `ALLOW_DEMO_MODE` as needed, optional `TELEGRAM_BOT_TOKEN`, `ADMIN_TOKEN`, CRM vars.
+3. Env: `NODE_ENV=production`, `APP_URL`, `TZ`, `ALLOW_DEMO_MODE` as needed, a non-empty `ADMIN_TOKEN`, optional `TELEGRAM_BOT_TOKEN`, CRM vars.
 4. Healthcheck: `GET /api/health`.
 
 Redeploy does not delete appointments while the volume stays mounted.

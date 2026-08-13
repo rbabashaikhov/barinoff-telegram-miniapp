@@ -44,7 +44,7 @@ export const config = {
       'Онлайн-запись. Выберите услугу, мастера и удобное время.',
   },
   admin: {
-    token: process.env.ADMIN_TOKEN || '',
+    token: (process.env.ADMIN_TOKEN || '').trim(),
   },
   crm: {
     adapter: crmAdapterName(process.env.CRM_ADAPTER),
@@ -67,6 +67,6 @@ export function publicAppConfig() {
     appDescription: config.business.description,
     timezone: config.timezone,
     demoMode: config.allowDemoMode,
-    adminProtected: Boolean(config.admin.token),
+    adminProtected: config.isProduction || Boolean(config.admin.token),
   };
 }

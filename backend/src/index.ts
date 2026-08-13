@@ -145,11 +145,13 @@ if (!config.isTest) {
       database: process.env.DATABASE_PATH || 'local default',
       crmAdapter: crmAdapter.id,
       demoMode: config.allowDemoMode,
-      adminProtected: Boolean(config.admin.token),
+      adminProtected: config.isProduction || Boolean(config.admin.token),
       business: publicAppConfig(),
     });
-    if (!config.admin.token) {
-      logger.warn('ADMIN_TOKEN is not set; /admin is publicly readable. Set ADMIN_TOKEN for client deployments.');
+    if (!config.admin.token && config.isProduction) {
+      logger.warn('ADMIN_TOKEN is not set; /api/admin is locked. Set ADMIN_TOKEN to enable the admin console.');
+    } else if (!config.admin.token) {
+      logger.warn('ADMIN_TOKEN is not set; /admin is publicly readable in non-production. Set ADMIN_TOKEN before deploying.');
     }
     if (publicDir) {
       logger.info('Serving frontend', { publicDir });

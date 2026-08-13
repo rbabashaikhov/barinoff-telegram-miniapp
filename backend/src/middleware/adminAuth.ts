@@ -8,19 +8,40 @@ function tokensEqual(provided: string, expected: string): boolean {
   return timingSafeEqual(left, right);
 }
 
-export function adminAuthMiddleware(req: Request, res: Response, next: NextFunction): void {
-  const expected = config.admin.token;
-  if (!expected) {
-    next();
-    return;
-  }
+export function isAdminPubliclyOpen(token: string, isProduction: boolean): boolean {
+  return !isProduction && token.length === 0;
+}
 
-  const headerToken =
+export function authorizeAdminRequest(params: {
+  expectedToken: string;
+  isProduction: boolean;
+  providedToken?: string;
+}): boolean {
+  if (isAdminPubliclyOpen(params.expectedToken, params.isProduction)) {
+    return true;
+  }
+  if (!params.expectedToken || !params.providedToken) {
+    return false;
+  }
+  return tokensEqual(params.providedToken, params.expectedToken);
+}
+
+export function readProvidedToken(req: Request): string | undefined {
+  return (
     (req.header('x-admin-token') as string | undefined) ||
     (req.header('authorization')?.replace(/^Bearer\s+/i, '') as string | undefined) ||
-    (typeof req.query.adminToken === 'string' ? req.query.adminToken : undefined);
+    (typeof req.query.adminToken === 'string' ? req.query.adminToken : undefined)
+  );
+}
 
-  if (!headerToken || !tokensEqual(headerToken, expected)) {
+export function adminAuthMiddleware(req: Request, res: Response, next: NextFunction): void {
+  const allowed = authorizeAdminRequest({
+    expectedToken: config.admin.token,
+    isProduction: config.isProduction,
+    providedToken: readProvidedToken(req),
+  });
+
+  if (!allowed) {
     res.status(401).json({ error: 'Admin authentication required', code: 'ADMIN_UNAUTHORIZED' });
     return;
   }

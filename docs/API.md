@@ -52,7 +52,8 @@ Identity is the Telegram user id from initData (or demo user `999000001`).
 ## Admin
 
 If `ADMIN_TOKEN` is set, send `x-admin-token: <token>` or `Authorization: Bearer <token>`.
-If it is empty, admin routes are public (demo only).
+
+In production an empty `ADMIN_TOKEN` **locks** `/api/admin` (`401 ADMIN_UNAUTHORIZED`). Local/dev with an empty token still allows a public admin console. Customer booking APIs are unchanged.
 
 | Method | Path | Description |
 |--------|------|-------------|
