@@ -1,6 +1,7 @@
 import { Router } from 'express';
 import { z } from 'zod';
-import { db } from '../db/schema.js';
+import { repos } from '../container.js';
+import { AppError, errorBody } from '../errors.js';
 import {
   addDays,
   getAvailableSlots,
@@ -23,7 +24,11 @@ const querySchema = z.object({
 availabilityRouter.get('/', (req, res) => {
   const parsed = querySchema.safeParse(req.query);
   if (!parsed.success) {
-    res.status(400).json({ error: 'Invalid query', details: parsed.error.flatten() });
+    res.status(400).json({
+      error: 'Invalid query',
+      code: 'VALIDATION_ERROR',
+      details: parsed.error.flatten(),
+    });
     return;
   }
 
@@ -31,7 +36,7 @@ availabilityRouter.get('/', (req, res) => {
 
   try {
     if (date) {
-      const slots = getAvailableSlots(db, serviceId, masterId, date);
+      const slots = getAvailableSlots(repos, serviceId, masterId, date);
       res.json({
         data: {
           serviceId,
@@ -48,7 +53,7 @@ availabilityRouter.get('/', (req, res) => {
     const calendar = [];
     for (let i = 0; i < days; i += 1) {
       const d = addDays(start, i);
-      const slots = getAvailableSlots(db, serviceId, masterId, d);
+      const slots = getAvailableSlots(repos, serviceId, masterId, d);
       calendar.push({
         date: d,
         weekday: getWeekday(d),
@@ -66,13 +71,11 @@ availabilityRouter.get('/', (req, res) => {
       },
     });
   } catch (error) {
+    if (error instanceof AppError) {
+      res.status(error.status).json(errorBody(error));
+      return;
+    }
     const message = error instanceof Error ? error.message : 'Failed to get availability';
-    const status =
-      message === 'Service not found' || message === 'Master not found'
-        ? 404
-        : message === 'Master does not offer this service'
-          ? 400
-          : 500;
-    res.status(status).json({ error: message });
+    res.status(500).json({ error: message, code: 'INTERNAL_ERROR' });
   }
 });

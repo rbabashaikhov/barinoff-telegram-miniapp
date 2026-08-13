@@ -13,6 +13,14 @@ services:
       ALLOW_DEMO_MODE: ${ALLOW_DEMO_MODE:-true}
       DATABASE_PATH: /app/data/booking.db
       TZ: ${TZ:-Europe/Moscow}
+      BUSINESS_NAME: ${BUSINESS_NAME:-Atelier Cut}
+      BUSINESS_TYPE: ${BUSINESS_TYPE:-barbershop}
+      APP_TITLE: ${APP_TITLE:-Service Booking}
+      APP_DESCRIPTION: ${APP_DESCRIPTION:-Онлайн-запись. Выберите услугу, мастера и удобное время.}
+      ADMIN_TOKEN: ${ADMIN_TOKEN:-}
+      CRM_ADAPTER: ${CRM_ADAPTER:-local}
+      CRM_WEBHOOK_URL: ${CRM_WEBHOOK_URL:-}
+      CRM_WEBHOOK_SECRET: ${CRM_WEBHOOK_SECRET:-}
     volumes:
       - sqlite_data:/app/data
     restart: unless-stopped

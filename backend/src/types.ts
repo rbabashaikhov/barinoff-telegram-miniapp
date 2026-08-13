@@ -58,6 +58,11 @@ export interface BlockedSlot {
   reason: string | null;
 }
 
+export interface BusyInterval {
+  start_time: string;
+  end_time: string;
+}
+
 export interface TelegramUser {
   id: number;
   username?: string;

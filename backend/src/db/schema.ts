@@ -153,9 +153,40 @@ export function applySchema(database: Database.Database): void {
       ON working_hours (master_id, weekday);
     CREATE INDEX IF NOT EXISTS idx_blocked_slots_master
       ON blocked_slots (master_id, blocked_date);
+
+    CREATE TABLE IF NOT EXISTS schema_migrations (
+      id TEXT PRIMARY KEY,
+      applied_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
   `);
 }
 
-export function migrate(): void {
-  applySchema(db);
+function isMigrationApplied(database: Database.Database, id: string): boolean {
+  const row = database
+    .prepare('SELECT id FROM schema_migrations WHERE id = ?')
+    .get(id) as { id: string } | undefined;
+  return Boolean(row);
+}
+
+function markMigrationApplied(database: Database.Database, id: string): void {
+  database.prepare('INSERT OR IGNORE INTO schema_migrations (id) VALUES (?)').run(id);
+}
+
+const MIGRATIONS: Array<{ id: string; up: (database: Database.Database) => void }> = [
+  {
+    id: '001_baseline',
+    up: applySchema,
+  },
+];
+
+export function migrate(database: Database.Database = db): void {
+  applySchema(database);
+  markMigrationApplied(database, '001_baseline');
+
+  for (const migration of MIGRATIONS) {
+    if (migration.id === '001_baseline') continue;
+    if (isMigrationApplied(database, migration.id)) continue;
+    migration.up(database);
+    markMigrationApplied(database, migration.id);
+  }
 }

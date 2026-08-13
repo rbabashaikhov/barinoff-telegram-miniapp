@@ -132,7 +132,7 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
     next();
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Unauthorized';
-    res.status(401).json({ error: message });
+    res.status(401).json({ error: message, code: 'UNAUTHORIZED' });
   }
 }
 

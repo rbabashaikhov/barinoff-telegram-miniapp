@@ -3,9 +3,11 @@ import { createRoot } from 'react-dom/client';
 import { BrowserRouter } from 'react-router-dom';
 import WebApp from '@twa-dev/sdk';
 import App from './App';
-import { setTelegramInitData } from './api/client';
+import { api, setTelegramInitData } from './api/client';
 import { AppContext, type AppContextValue } from './context/AppContext';
 import { BookingProvider } from './context/BookingContext';
+import { BusinessContext, DEFAULT_APP_CONFIG } from './context/BusinessContext';
+import type { AppConfig } from './types';
 import './styles.css';
 
 const DEMO_USER = {
@@ -17,6 +19,7 @@ const DEMO_USER = {
 
 function Root() {
   const [ready, setReady] = useState(false);
+  const [business, setBusiness] = useState<AppConfig>(DEFAULT_APP_CONFIG);
   const [context, setContext] = useState<AppContextValue>({
     user: DEMO_USER,
     isDemo: true,
@@ -24,6 +27,18 @@ function Root() {
   });
 
   useEffect(() => {
+    let cancelled = false;
+    api
+      .getConfig()
+      .then((res) => {
+        if (cancelled) return;
+        setBusiness(res.data);
+        document.title = res.data.appTitle;
+      })
+      .catch(() => {
+        if (!cancelled) setBusiness(DEFAULT_APP_CONFIG);
+      });
+
     try {
       const tg = WebApp;
       tg.ready();
@@ -69,6 +84,10 @@ function Root() {
     } finally {
       setReady(true);
     }
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   const value = useMemo(() => context, [context]);
@@ -78,13 +97,15 @@ function Root() {
   }
 
   return (
-    <AppContext.Provider value={value}>
-      <BookingProvider>
-        <BrowserRouter>
-          <App />
-        </BrowserRouter>
-      </BookingProvider>
-    </AppContext.Provider>
+    <BusinessContext.Provider value={business}>
+      <AppContext.Provider value={value}>
+        <BookingProvider>
+          <BrowserRouter>
+            <App />
+          </BrowserRouter>
+        </BookingProvider>
+      </AppContext.Provider>
+    </BusinessContext.Provider>
   );
 }
 

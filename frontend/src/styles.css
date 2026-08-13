@@ -610,6 +610,49 @@ button {
   margin-top: 16px;
 }
 
+.admin-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.admin-tab {
+  min-height: 40px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  color: var(--text-muted);
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.admin-tab.is-active {
+  color: #1a140c;
+  background: var(--accent);
+  border-color: transparent;
+}
+
+.admin-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.admin-filters input,
+.admin-filters select {
+  min-height: 44px;
+  padding: 0 12px;
+  border-radius: 12px;
+  border: 1px solid var(--line-strong);
+  background: var(--bg-elevated);
+  color: var(--text);
+}
+
+.admin-filters .btn {
+  min-height: 44px;
+}
+
 .status-pill {
   display: inline-flex;
   align-items: center;
