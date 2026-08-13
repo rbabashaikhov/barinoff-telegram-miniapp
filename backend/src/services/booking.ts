@@ -1,6 +1,7 @@
 import type Database from 'better-sqlite3';
 import type {
   AppointmentWithDetails,
+  Master,
   Service,
   TelegramUser,
   WorkingHours,
@@ -155,37 +156,95 @@ export function getActiveService(
     .get(serviceId) as Service | undefined;
 }
 
+export function getActiveMaster(
+  db: Database.Database,
+  masterId: number,
+): Master | undefined {
+  return db
+    .prepare('SELECT * FROM masters WHERE id = ? AND active = 1')
+    .get(masterId) as Master | undefined;
+}
+
+export function masterOffersService(
+  db: Database.Database,
+  masterId: number,
+  serviceId: number,
+): boolean {
+  const row = db
+    .prepare(
+      `
+      SELECT 1 AS ok
+      FROM master_services
+      WHERE master_id = ? AND service_id = ?
+    `,
+    )
+    .get(masterId, serviceId) as { ok: number } | undefined;
+  return Boolean(row);
+}
+
+export function listMasters(db: Database.Database, serviceId?: number): Master[] {
+  if (serviceId) {
+    return db
+      .prepare(
+        `
+        SELECT m.*
+        FROM masters m
+        JOIN master_services ms ON ms.master_id = m.id
+        WHERE m.active = 1 AND ms.service_id = ?
+        ORDER BY m.display_order, m.id
+      `,
+      )
+      .all(serviceId) as Master[];
+  }
+
+  return db
+    .prepare(
+      `
+      SELECT *
+      FROM masters
+      WHERE active = 1
+      ORDER BY display_order, id
+    `,
+    )
+    .all() as Master[];
+}
+
 export function getWorkingHoursForDate(
   db: Database.Database,
   date: string,
+  masterId: number,
 ): WorkingHours | null {
   const weekday = getWeekday(date);
   const row = db
-    .prepare('SELECT * FROM working_hours WHERE weekday = ?')
-    .get(weekday) as WorkingHours | undefined;
+    .prepare('SELECT * FROM working_hours WHERE master_id = ? AND weekday = ?')
+    .get(masterId, weekday) as WorkingHours | undefined;
   return row ?? null;
 }
 
-export function getBusyIntervals(db: Database.Database, date: string): BusyInterval[] {
+export function getBusyIntervals(
+  db: Database.Database,
+  date: string,
+  masterId: number,
+): BusyInterval[] {
   const appointments = db
     .prepare(
       `
       SELECT start_time, end_time
       FROM appointments
-      WHERE appointment_date = ? AND status = 'confirmed'
+      WHERE appointment_date = ? AND master_id = ? AND status = 'confirmed'
     `,
     )
-    .all(date) as BusyInterval[];
+    .all(date, masterId) as BusyInterval[];
 
   const blocked = db
     .prepare(
       `
       SELECT start_time, end_time
       FROM blocked_slots
-      WHERE blocked_date = ?
+      WHERE blocked_date = ? AND master_id = ?
     `,
     )
-    .all(date) as BusyInterval[];
+    .all(date, masterId) as BusyInterval[];
 
   return [...appointments, ...blocked];
 }
@@ -193,6 +252,7 @@ export function getBusyIntervals(db: Database.Database, date: string): BusyInter
 export function getAvailableSlots(
   db: Database.Database,
   serviceId: number,
+  masterId: number,
   date: string,
   now = new Date(),
 ): string[] {
@@ -200,9 +260,16 @@ export function getAvailableSlots(
   if (!service) {
     throw new Error('Service not found');
   }
+  const master = getActiveMaster(db, masterId);
+  if (!master) {
+    throw new Error('Master not found');
+  }
+  if (!masterOffersService(db, masterId, serviceId)) {
+    throw new Error('Master does not offer this service');
+  }
 
-  const workingHours = getWorkingHoursForDate(db, date);
-  const busyIntervals = getBusyIntervals(db, date);
+  const workingHours = getWorkingHoursForDate(db, date, masterId);
+  const busyIntervals = getBusyIntervals(db, date, masterId);
 
   return calculateAvailableSlots({
     date,
@@ -225,6 +292,7 @@ export function createAppointment(
   params: {
     user: TelegramUser;
     serviceId: number;
+    masterId: number;
     date: string;
     startTime: string;
     now?: Date;
@@ -234,6 +302,13 @@ export function createAppointment(
   const service = getActiveService(db, params.serviceId);
   if (!service) {
     throw new Error('Service not found');
+  }
+  const master = getActiveMaster(db, params.masterId);
+  if (!master) {
+    throw new Error('Master not found');
+  }
+  if (!masterOffersService(db, params.masterId, params.serviceId)) {
+    throw new Error('Master does not offer this service');
   }
 
   if (!/^\d{4}-\d{2}-\d{2}$/.test(params.date)) {
@@ -248,15 +323,20 @@ export function createAppointment(
   );
 
   const createTx = db.transaction(() => {
-    const available = getAvailableSlots(db, params.serviceId, params.date, now);
+    const available = getAvailableSlots(
+      db,
+      params.serviceId,
+      params.masterId,
+      params.date,
+      now,
+    );
     if (!available.includes(params.startTime)) {
       throw new BookingConflictError();
     }
 
-    // Extra overlap guard inside transaction against race conditions
     const start = timeToMinutes(params.startTime);
     const end = timeToMinutes(endTime);
-    const busy = getBusyIntervals(db, params.date);
+    const busy = getBusyIntervals(db, params.date, params.masterId);
     const conflict = busy.some((interval) =>
       rangesOverlap(start, end, timeToMinutes(interval.start_time), timeToMinutes(interval.end_time)),
     );
@@ -270,11 +350,18 @@ export function createAppointment(
       .prepare(
         `
         INSERT INTO appointments (
-          client_id, service_id, appointment_date, start_time, end_time, status
-        ) VALUES (?, ?, ?, ?, ?, 'confirmed')
+          client_id, service_id, master_id, appointment_date, start_time, end_time, status
+        ) VALUES (?, ?, ?, ?, ?, ?, 'confirmed')
       `,
       )
-      .run(clientId, params.serviceId, params.date, params.startTime, endTime);
+      .run(
+        clientId,
+        params.serviceId,
+        params.masterId,
+        params.date,
+        params.startTime,
+        endTime,
+      );
 
     return getAppointmentById(db, Number(result.lastInsertRowid))!;
   });
@@ -288,12 +375,15 @@ const APPOINTMENT_SELECT = `
     s.name AS service_name,
     s.price AS service_price,
     s.duration_minutes AS service_duration_minutes,
+    m.name AS master_name,
+    m.role AS master_role,
     c.telegram_user_id AS client_telegram_user_id,
     c.username AS client_username,
     c.first_name AS client_first_name,
     c.last_name AS client_last_name
   FROM appointments a
   JOIN services s ON s.id = a.service_id
+  JOIN masters m ON m.id = a.master_id
   JOIN clients c ON c.id = a.client_id
 `;
 

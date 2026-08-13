@@ -8,17 +8,17 @@ import type { DayAvailability } from '../types';
 
 export function DatePage() {
   const navigate = useNavigate();
-  const { service, date, setDate } = useBooking();
+  const { service, master, date, setDate } = useBooking();
   const [calendar, setCalendar] = useState<DayAvailability[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!service) return;
+    if (!service || !master) return;
     let cancelled = false;
     setLoading(true);
     api
-      .getAvailability(service.id, 14)
+      .getAvailability(service.id, master.id, 14)
       .then((res) => {
         if (!cancelled) setCalendar(res.data.calendar);
       })
@@ -31,16 +31,21 @@ export function DatePage() {
     return () => {
       cancelled = true;
     };
-  }, [service]);
+  }, [service, master]);
 
   if (!service) {
     return <Navigate to="/services" replace />;
   }
+  if (!master) {
+    return <Navigate to="/booking/master" replace />;
+  }
 
   return (
     <div className="page">
-      <TopBar title="Дата" backTo="/services" />
-      <p className="lead">{service.name} · выберите день</p>
+      <TopBar title="Дата" backTo="/booking/master" />
+      <p className="lead">
+        {service.name} · {master.name}
+      </p>
 
       {loading && <div className="loading">Загрузка дат…</div>}
       {error && <div className="error-box">{error}</div>}

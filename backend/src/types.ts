@@ -18,10 +18,21 @@ export interface Client {
   created_at: string;
 }
 
+export interface Master {
+  id: number;
+  name: string;
+  role: string;
+  description: string;
+  active: number;
+  display_order: number;
+  created_at: string;
+}
+
 export interface Appointment {
   id: number;
   client_id: number;
   service_id: number;
+  master_id: number;
   appointment_date: string;
   start_time: string;
   end_time: string;
@@ -31,6 +42,7 @@ export interface Appointment {
 
 export interface WorkingHours {
   id: number;
+  master_id?: number;
   weekday: number;
   start_time: string;
   end_time: string;
@@ -39,6 +51,7 @@ export interface WorkingHours {
 
 export interface BlockedSlot {
   id: number;
+  master_id?: number;
   blocked_date: string;
   start_time: string;
   end_time: string;
@@ -63,6 +76,8 @@ export interface AppointmentWithDetails extends Appointment {
   service_name: string;
   service_price: number;
   service_duration_minutes: number;
+  master_name: string;
+  master_role: string;
   client_telegram_user_id: number;
   client_username: string | null;
   client_first_name: string | null;

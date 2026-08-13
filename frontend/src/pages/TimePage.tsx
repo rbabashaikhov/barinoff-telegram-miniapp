@@ -7,17 +7,17 @@ import { formatDateFull } from '../lib/format';
 
 export function TimePage() {
   const navigate = useNavigate();
-  const { service, date, startTime, setStartTime } = useBooking();
+  const { service, master, date, startTime, setStartTime } = useBooking();
   const [slots, setSlots] = useState<string[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    if (!service || !date) return;
+    if (!service || !master || !date) return;
     let cancelled = false;
     setLoading(true);
     api
-      .getSlots(service.id, date)
+      .getSlots(service.id, master.id, date)
       .then((res) => {
         if (!cancelled) setSlots(res.data.slots);
       })
@@ -30,16 +30,18 @@ export function TimePage() {
     return () => {
       cancelled = true;
     };
-  }, [service, date]);
+  }, [service, master, date]);
 
-  if (!service || !date) {
+  if (!service || !master || !date) {
     return <Navigate to="/services" replace />;
   }
 
   return (
     <div className="page page-with-sticky">
       <TopBar title="Время" backTo="/booking/date" />
-      <p className="lead">{formatDateFull(date)}</p>
+      <p className="lead">
+        {master.name} · {formatDateFull(date)}
+      </p>
 
       {loading && <div className="loading">Загрузка слотов…</div>}
       {error && <div className="error-box">{error}</div>}

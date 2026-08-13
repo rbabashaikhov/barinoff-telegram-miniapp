@@ -43,7 +43,7 @@ export function ServicesPage() {
             service={service}
             onSelect={(selected) => {
               setService(selected);
-              navigate('/booking/date');
+              navigate('/booking/master');
             }}
           />
         ))}

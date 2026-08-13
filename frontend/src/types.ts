@@ -7,6 +7,15 @@ export interface Service {
   active: boolean;
 }
 
+export interface Master {
+  id: number;
+  name: string;
+  role: string;
+  description: string;
+  active: boolean;
+  displayOrder: number;
+}
+
 export interface Appointment {
   id: number;
   date: string;
@@ -19,6 +28,11 @@ export interface Appointment {
     name: string;
     price: number;
     durationMinutes: number;
+  };
+  master: {
+    id: number;
+    name: string;
+    role: string;
   };
   client: {
     telegramUserId: number;
@@ -38,6 +52,7 @@ export interface DayAvailability {
 
 export interface BookingDraft {
   service: Service | null;
+  master: Master | null;
   date: string | null;
   startTime: string | null;
 }

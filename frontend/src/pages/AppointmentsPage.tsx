@@ -68,6 +68,9 @@ export function AppointmentsPage() {
               <span className={`status-pill ${item.status}`}>{formatStatus(item.status)}</span>
             </div>
             <p className="muted" style={{ margin: '8px 0 0' }}>
+              {item.master.name}
+            </p>
+            <p className="muted" style={{ margin: '4px 0 0' }}>
               {formatDateFull(item.date)}
             </p>
             <p style={{ margin: '6px 0 0' }}>

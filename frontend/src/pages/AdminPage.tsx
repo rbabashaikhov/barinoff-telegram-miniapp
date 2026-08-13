@@ -66,6 +66,7 @@ export function AdminPage() {
                 <tr>
                   <th>Дата</th>
                   <th>Время</th>
+                  <th>Мастер</th>
                   <th>Клиент</th>
                   <th>Telegram</th>
                   <th>Услуга</th>
@@ -76,7 +77,7 @@ export function AdminPage() {
               <tbody>
                 {items.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="muted">
+                    <td colSpan={8} className="muted">
                       Записей пока нет
                     </td>
                   </tr>
@@ -90,6 +91,7 @@ export function AdminPage() {
                     <td>
                       {item.startTime}–{item.endTime}
                     </td>
+                    <td>{item.master.name}</td>
                     <td>{clientName(item)}</td>
                     <td>{telegramLabel(item)}</td>
                     <td>{item.service.name}</td>
@@ -121,7 +123,7 @@ export function AdminPage() {
                   </span>
                 </div>
                 <p className="muted" style={{ margin: '8px 0 0' }}>
-                  {clientName(item)} · {telegramLabel(item)}
+                  {item.master.name} · {clientName(item)} · {telegramLabel(item)}
                 </p>
                 <p style={{ margin: '6px 0 0' }}>
                   {item.service.name}

@@ -12,6 +12,7 @@ export const availabilityRouter = Router();
 
 const querySchema = z.object({
   serviceId: z.coerce.number().int().positive(),
+  masterId: z.coerce.number().int().positive(),
   date: z
     .string()
     .regex(/^\d{4}-\d{2}-\d{2}$/)
@@ -26,14 +27,15 @@ availabilityRouter.get('/', (req, res) => {
     return;
   }
 
-  const { serviceId, date, days } = parsed.data;
+  const { serviceId, masterId, date, days } = parsed.data;
 
   try {
     if (date) {
-      const slots = getAvailableSlots(db, serviceId, date);
+      const slots = getAvailableSlots(db, serviceId, masterId, date);
       res.json({
         data: {
           serviceId,
+          masterId,
           date,
           weekday: getWeekday(date),
           slots,
@@ -46,7 +48,7 @@ availabilityRouter.get('/', (req, res) => {
     const calendar = [];
     for (let i = 0; i < days; i += 1) {
       const d = addDays(start, i);
-      const slots = getAvailableSlots(db, serviceId, d);
+      const slots = getAvailableSlots(db, serviceId, masterId, d);
       calendar.push({
         date: d,
         weekday: getWeekday(d),
@@ -58,13 +60,19 @@ availabilityRouter.get('/', (req, res) => {
     res.json({
       data: {
         serviceId,
+        masterId,
         days,
         calendar,
       },
     });
   } catch (error) {
     const message = error instanceof Error ? error.message : 'Failed to get availability';
-    const status = message === 'Service not found' ? 404 : 500;
+    const status =
+      message === 'Service not found' || message === 'Master not found'
+        ? 404
+        : message === 'Master does not offer this service'
+          ? 400
+          : 500;
     res.status(status).json({ error: message });
   }
 });

@@ -9,6 +9,7 @@ import { db, migrate } from './db/schema.js';
 import { adminRouter } from './routes/admin.js';
 import { appointmentsRouter } from './routes/appointments.js';
 import { availabilityRouter } from './routes/availability.js';
+import { mastersRouter } from './routes/masters.js';
 import { servicesRouter } from './routes/services.js';
 
 migrate();
@@ -49,6 +50,7 @@ app.get('/api/health', (_req, res) => {
 });
 
 app.use('/api/services', servicesRouter);
+app.use('/api/masters', mastersRouter);
 app.use('/api/availability', availabilityRouter);
 app.use('/api/appointments', appointmentsRouter);
 app.use('/api/admin', adminRouter);

@@ -212,6 +212,7 @@ button {
 }
 
 .service-card,
+.master-card,
 .appointment-card,
 .summary-card,
 .admin-card {
@@ -256,6 +257,60 @@ button {
   color: var(--accent-strong);
   font-weight: 700;
   font-size: 0.95rem;
+}
+
+.master-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 14px;
+  text-align: left;
+  width: 100%;
+  transition: border-color 0.2s ease, background 0.2s ease, box-shadow 0.2s ease;
+}
+
+.master-card:hover,
+.master-card.selected {
+  border-color: rgba(212, 165, 116, 0.65);
+  background: linear-gradient(180deg, var(--accent-dim), var(--bg-elevated));
+  box-shadow: 0 0 0 1px rgba(212, 165, 116, 0.12);
+}
+
+.master-avatar {
+  flex: 0 0 48px;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  background: var(--accent-dim);
+  border: 1px solid rgba(212, 165, 116, 0.4);
+  color: var(--accent-strong);
+  font-weight: 700;
+  font-size: 0.95rem;
+}
+
+.master-copy {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.master-copy strong {
+  color: var(--text);
+  font-size: 1.05rem;
+}
+
+.master-role {
+  color: var(--accent-strong);
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.master-desc {
+  color: var(--text-muted);
+  font-size: 0.9rem;
+  line-height: 1.4;
 }
 
 .date-picker {

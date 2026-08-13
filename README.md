@@ -2,7 +2,7 @@
 
 MVP Telegram Mini App для онлайн-записи к барберу.
 
-Локальный прототип: выбор услуги → дата → слот → подтверждение → сохранение в SQLite → просмотр/отмена записей и простая `/admin` страница.
+Локальный прототип: услуга → мастер → дата → слот мастера → подтверждение → сохранение в SQLite → просмотр/отмена записей и простая `/admin` страница.
 
 ## Архитектура
 
@@ -139,9 +139,11 @@ telegram-booking-miniapp/
 |--------|------|------|----------|
 | GET | `/api/health` | — | Healthcheck |
 | GET | `/api/services` | — | Активные услуги |
-| GET | `/api/availability?serviceId=&days=` | — | Календарь слотов |
-| GET | `/api/availability?serviceId=&date=` | — | Слоты на дату |
-| POST | `/api/appointments` | Telegram/demo | Создать запись |
+| GET | `/api/masters` | — | Активные мастера |
+| GET | `/api/masters?serviceId=` | — | Мастера, оказывающие услугу |
+| GET | `/api/availability?serviceId=&masterId=&days=` | — | Календарь слотов мастера |
+| GET | `/api/availability?serviceId=&masterId=&date=` | — | Слоты мастера на дату |
+| POST | `/api/appointments` | Telegram/demo | Создать запись (`masterId` обязателен) |
 | GET | `/api/appointments/me` | Telegram/demo | Мои будущие записи |
 | PATCH | `/api/appointments/:id/cancel` | Telegram/demo | Отменить |
 | DELETE | `/api/appointments/:id` | Telegram/demo | Отменить (alias) |
@@ -154,15 +156,18 @@ telegram-booking-miniapp/
 Таблицы:
 
 - `services` — услуги
+- `masters` — мастера
+- `master_services` — какие услуги оказывает мастер
 - `clients` — клиенты по `telegram_user_id`
-- `appointments` — записи (`confirmed` / `cancelled`)
-- `working_hours` — расписание по weekday (0=вс … 6=сб)
-- `blocked_slots` — опциональные блокировки
+- `appointments` — записи (`confirmed` / `cancelled`) с обязательным `master_id`
+- `working_hours` — расписание мастера по weekday (0=вс … 6=сб)
+- `blocked_slots` — блокировки слотов конкретного мастера
 
 Seed при первом запуске:
 
 - 4 услуги (стрижки/борода)
-- Пн–Сб 10:00–20:00, вс — выходной
+- 5 мастеров с разными расписаниями
+- все мастера оказывают все услуги
 
 ## Scripts
 

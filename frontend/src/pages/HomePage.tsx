@@ -40,7 +40,7 @@ export function HomePage() {
       <section className="hero-block">
         <p className="eyebrow">Barbershop</p>
         <h1 className="brand">Atelier Cut</h1>
-        <p className="lead">Онлайн-запись к барберу. Выберите услугу и удобное время.</p>
+        <p className="lead">Онлайн-запись к барберу. Выберите услугу, мастера и удобное время.</p>
         <Link className="btn btn-primary btn-block hero-cta" to="/services">
           Записаться
         </Link>

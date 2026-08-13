@@ -32,6 +32,10 @@ export function SuccessPage() {
             <span>{appointment.service.name}</span>
           </div>
           <div className="summary-row">
+            <span>Мастер</span>
+            <span>{appointment.master.name}</span>
+          </div>
+          <div className="summary-row">
             <span>Дата</span>
             <span>{formatDateFull(appointment.date)}</span>
           </div>

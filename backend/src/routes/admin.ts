@@ -21,6 +21,11 @@ adminRouter.get('/appointments', (_req, res) => {
         price: a.service_price,
         durationMinutes: a.service_duration_minutes,
       },
+      master: {
+        id: a.master_id,
+        name: a.master_name,
+        role: a.master_role,
+      },
       client: {
         name: [a.client_first_name, a.client_last_name].filter(Boolean).join(' ') || '—',
         telegramUserId: a.client_telegram_user_id,

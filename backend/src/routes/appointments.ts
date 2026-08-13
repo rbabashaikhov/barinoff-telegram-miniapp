@@ -26,6 +26,11 @@ function serializeAppointment(a: AppointmentWithDetails) {
       price: a.service_price,
       durationMinutes: a.service_duration_minutes,
     },
+    master: {
+      id: a.master_id,
+      name: a.master_name,
+      role: a.master_role,
+    },
     client: {
       telegramUserId: a.client_telegram_user_id,
       username: a.client_username,
@@ -37,6 +42,7 @@ function serializeAppointment(a: AppointmentWithDetails) {
 
 const createSchema = z.object({
   serviceId: z.number().int().positive(),
+  masterId: z.number().int().positive(),
   date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/),
   startTime: z.string().regex(/^\d{2}:\d{2}$/),
 });
@@ -52,6 +58,7 @@ appointmentsRouter.post('/', authMiddleware, (req, res) => {
     const appointment = createAppointment(db, {
       user: req.auth!.telegramUser,
       serviceId: parsed.data.serviceId,
+      masterId: parsed.data.masterId,
       date: parsed.data.date,
       startTime: parsed.data.startTime,
     });
@@ -62,7 +69,8 @@ appointmentsRouter.post('/', authMiddleware, (req, res) => {
       return;
     }
     const message = error instanceof Error ? error.message : 'Failed to create appointment';
-    const status = message === 'Service not found' ? 404 : 400;
+    const status =
+      message === 'Service not found' || message === 'Master not found' ? 404 : 400;
     res.status(status).json({ error: message });
   }
 });

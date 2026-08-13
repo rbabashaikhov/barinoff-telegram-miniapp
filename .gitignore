@@ -13,6 +13,7 @@ coverage/
 .vite/
 .turbo/
 *.tsbuildinfo
+qa-screenshots/
 .idea/
 .vscode/
 !/.vscode/extensions.json

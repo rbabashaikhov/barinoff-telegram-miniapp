@@ -4,6 +4,7 @@ import { AppointmentsPage } from './pages/AppointmentsPage';
 import { ConfirmPage } from './pages/ConfirmPage';
 import { DatePage } from './pages/DatePage';
 import { HomePage } from './pages/HomePage';
+import { MasterPage } from './pages/MasterPage';
 import { ServicesPage } from './pages/ServicesPage';
 import { SuccessPage } from './pages/SuccessPage';
 import { TimePage } from './pages/TimePage';
@@ -17,6 +18,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/services" element={<ServicesPage />} />
+        <Route path="/booking/master" element={<MasterPage />} />
         <Route path="/booking/date" element={<DatePage />} />
         <Route path="/booking/time" element={<TimePage />} />
         <Route path="/booking/confirm" element={<ConfirmPage />} />

@@ -7,21 +7,22 @@ import { formatDateFull, formatDuration, formatPrice } from '../lib/format';
 
 export function ConfirmPage() {
   const navigate = useNavigate();
-  const { service, date, startTime } = useBooking();
+  const { service, master, date, startTime } = useBooking();
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  if (!service || !date || !startTime) {
+  if (!service || !master || !date || !startTime) {
     return <Navigate to="/services" replace />;
   }
 
   async function onConfirm() {
-    if (!service || !date || !startTime) return;
+    if (!service || !master || !date || !startTime) return;
     setSubmitting(true);
     setError(null);
     try {
       const res = await api.createAppointment({
         serviceId: service.id,
+        masterId: master.id,
         date,
         startTime,
       });
@@ -41,6 +42,10 @@ export function ConfirmPage() {
         <div className="summary-row">
           <span>Услуга</span>
           <span>{service.name}</span>
+        </div>
+        <div className="summary-row">
+          <span>Мастер</span>
+          <span>{master.name}</span>
         </div>
         <div className="summary-row">
           <span>Дата</span>

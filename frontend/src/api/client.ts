@@ -1,4 +1,4 @@
-import type { Appointment, DayAvailability, Service } from '../types';
+import type { Appointment, DayAvailability, Master, Service } from '../types';
 
 const API_BASE = (import.meta.env.VITE_API_URL as string | undefined)?.replace(/\/$/, '') ?? '';
 
@@ -29,15 +29,24 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
 export const api = {
   getServices: () => request<{ data: Service[] }>('/api/services'),
-  getAvailability: (serviceId: number, days = 14) =>
-    request<{ data: { serviceId: number; days: number; calendar: DayAvailability[] } }>(
-      `/api/availability?serviceId=${serviceId}&days=${days}`,
+  getMasters: (serviceId?: number) =>
+    request<{ data: Master[] }>(
+      serviceId ? `/api/masters?serviceId=${serviceId}` : '/api/masters',
     ),
-  getSlots: (serviceId: number, date: string) =>
-    request<{ data: { serviceId: number; date: string; slots: string[] } }>(
-      `/api/availability?serviceId=${serviceId}&date=${date}`,
+  getAvailability: (serviceId: number, masterId: number, days = 14) =>
+    request<{
+      data: { serviceId: number; masterId: number; days: number; calendar: DayAvailability[] };
+    }>(`/api/availability?serviceId=${serviceId}&masterId=${masterId}&days=${days}`),
+  getSlots: (serviceId: number, masterId: number, date: string) =>
+    request<{ data: { serviceId: number; masterId: number; date: string; slots: string[] } }>(
+      `/api/availability?serviceId=${serviceId}&masterId=${masterId}&date=${date}`,
     ),
-  createAppointment: (body: { serviceId: number; date: string; startTime: string }) =>
+  createAppointment: (body: {
+    serviceId: number;
+    masterId: number;
+    date: string;
+    startTime: string;
+  }) =>
     request<{ data: Appointment }>('/api/appointments', {
       method: 'POST',
       body: JSON.stringify(body),
