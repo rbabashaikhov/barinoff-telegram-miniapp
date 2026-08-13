@@ -1,59 +1,139 @@
 # Telegram Booking Mini App
 
-MVP Telegram Mini App для онлайн-записи к барберу.
+CRM-ready Telegram Mini App template for service booking.
 
-Локальный прототип: услуга → мастер → дата → слот мастера → подтверждение → сохранение в SQLite → просмотр/отмена записей и простая `/admin` страница.
+Default demo vertical is a barbershop, but the same codebase is a **single-business white-label**: one deployment = one client. Branding, copy, and CRM connection are configuration, not a rewrite.
 
-## Архитектура
+Live demo: https://telegram-booking-miniapp-production.up.railway.app
+
+## What this is
+
+A production template for:
+
+- Barber Booking
+- Beauty Booking
+- Massage Booking
+- other appointment-based service businesses
+
+Flow:
+
+**Service → Master → Date → Slot → Confirm → Appointment**
+
+It can be shown as a live demo, adapted per vertical, and connected to a customer CRM/ERP without rewriting the frontend or core booking rules.
+
+## Architecture
 
 ```
-Browser / Telegram WebView
-        │
-        ▼
-   Single service (Express)
-   ├── /           React static
-   └── /api/*      REST API
-        │
-        ▼
-   SQLite (persistent volume)
+Telegram Mini App / Browser
+        ↓
+REST API (Express)
+        ↓
+Application / Domain (booking, availability)
+        ↓
+Repositories
+        ↓
+Demo / Local SQLite
+
++
+
+Integration events
+        ↓
+CRM adapter (local | webhook | future vendor)
 ```
 
-- Frontend и backend — отдельные пакеты в npm workspaces.
-- В production (Railway / root Dockerfile) один сервис отдаёт UI и API.
-- Локально: `npm run dev` (Vite + API) или `docker compose` (nginx + API).
-- Auth: Telegram `initData` (HMAC-SHA256). В demo mode без Telegram используется тестовый клиент.
+- Frontend: React 18, TypeScript, Vite, Telegram WebApp SDK
+- Backend: Express, TypeScript, Zod
+- Default storage: SQLite (`better-sqlite3`) on a persistent volume
+- Business rules (double-booking, working hours, blocked slots, inactive catalog) live in the application layer
+- SQLite is the demo/default adapter, not the only possible storage
+- CRM is a side effect after a successful local commit
 
-## Стек
+## Demo mode
 
-| Слой | Технологии |
-|------|------------|
-| Frontend | React 18, TypeScript, Vite, React Router, `@twa-dev/sdk` |
-| Backend | Node.js, Express, TypeScript, Zod |
-| DB | SQLite (`better-sqlite3`), WAL |
-| Infra | Docker, Docker Compose |
+If the app is opened in a normal browser without Telegram:
 
-## Локальный запуск
+- client `demo_client` (`telegram_user_id = 999000001`) is used
+- the full booking flow works without a bot
+- UI shows a Demo mode banner
 
-### Вариант A — Docker Compose (рекомендуется для демо)
+Local SQLite is the source of truth. Seed catalog data is inserted only when tables are empty, so production appointments are not overwritten on restart.
+
+## CRM integration
+
+Default: `CRM_ADAPTER=local` — no external calls.
+
+Generic CRM contract:
+
+- `createOrUpdateCustomer()`
+- `createBooking()`
+- `updateBooking()`
+- `cancelBooking()`
+- `syncServices()`
+- `syncMasters()`
+
+Application events (`booking.created`, `booking.cancelled`, `customer.created`, `booking.updated`) are emitted after the local transaction commits. Adapters subscribe to those events.
+
+### Consistency
+
+**Local-first.** Availability and appointments are committed to SQLite first. CRM/webhook delivery is best-effort: timeout, HTTP errors, and adapter exceptions are logged and never roll back the local booking.
+
+### Webhook adapter
 
 ```bash
-cp .env.example .env
-docker compose up --build
+CRM_ADAPTER=webhook
+CRM_WEBHOOK_URL=https://crm.example.com/hooks/booking
+CRM_WEBHOOK_SECRET=replace-me
+CRM_WEBHOOK_TIMEOUT_MS=5000
 ```
 
-Если `docker compose` ругается на Docker Desktop socket, используйте системный Docker:
+The app POSTs a JSON envelope:
 
-```bash
-DOCKER_HOST=unix:///var/run/docker.sock docker compose up --build
+```json
+{
+  "event": "booking.created",
+  "occurredAt": "2026-08-13T14:22:01.000Z",
+  "business": { "name": "Atelier Cut", "type": "barbershop" },
+  "data": {
+    "localAppointmentId": 12,
+    "status": "confirmed",
+    "date": "2026-08-17",
+    "startTime": "10:00",
+    "endTime": "11:00",
+    "service": { "id": 1, "name": "Мужская стрижка", "price": 1500, "durationMinutes": 60 },
+    "master": { "id": 1, "name": "Александр", "role": "Senior Barber" },
+    "customer": { "telegramUserId": 111, "firstName": "Ivan", "localClientId": 4 }
+  }
+}
 ```
 
-- Frontend: http://localhost:5173
-- Backend API: http://localhost:3000
-- Admin: http://localhost:5173/admin
+Headers:
 
-SQLite хранится в Docker volume `sqlite_data` (`/app/data/booking.db`).
+- `X-Webhook-Signature: sha256=<hmac>`
+- `Authorization: Bearer <CRM_WEBHOOK_SECRET>`
+- `X-Webhook-Event: booking.created`
 
-### Вариант B — npm workspaces (разработка)
+Verify HMAC-SHA256 of the raw body using `CRM_WEBHOOK_SECRET`. Secrets stay on the server; `/api/config` never exposes them.
+
+Vendor adapters (Bitrix24, amoCRM, YCLIENTS, Altegio) should be added as extra files under `backend/src/integrations/crm/adapters/` and selected via `CRM_ADAPTER`.
+
+Optional `CRM_SYNC_ON_STARTUP=true` pushes services/masters on boot. Keep it off unless the CRM endpoint is idempotent — Railway restarts would otherwise repeat the sync.
+
+## White-label
+
+One deployment = one business. Change env, not the React tree:
+
+| Variable | Default |
+|----------|---------|
+| `BUSINESS_NAME` | `Atelier Cut` |
+| `BUSINESS_TYPE` | `barbershop` |
+| `APP_TITLE` | `Service Booking` |
+| `APP_DESCRIPTION` | Онлайн-запись… |
+
+Public values are served at `GET /api/config` and used on the home screen.
+
+Catalog (services, masters, hours) is data. For a beauty salon, replace seed data or edit SQLite; do not fork the app.
+
+## Local run
 
 ```bash
 cp .env.example .env
@@ -61,153 +141,122 @@ npm install
 npm run dev
 ```
 
-Отдельно:
+- Frontend: http://localhost:5173
+- API: http://localhost:3000
+- Admin: http://localhost:5173/admin
+
+Docker Compose:
 
 ```bash
-npm run dev -w backend   # :3000
-npm run dev -w frontend  # :5173
+DOCKER_HOST=unix:///var/run/docker.sock docker compose up --build
 ```
 
 ## Environment variables
 
-См. `.env.example`.
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `NODE_ENV` | yes in prod | `development` / `production` |
+| `APP_URL` | yes in prod | Public origin for CORS |
+| `API_PORT` / `PORT` | no | Default `3000` |
+| `DATABASE_PATH` | yes in prod | `/data/booking.db` on Railway |
+| `TELEGRAM_BOT_TOKEN` | for real Telegram | HMAC validation of initData |
+| `ALLOW_DEMO_MODE` | demo | `true` for browser QA |
+| `TZ` | no | Default `Europe/Moscow` |
+| `PUBLIC_DIR` | prod image | Static frontend directory |
+| `VITE_API_URL` | no | Empty = same-origin `/api` |
+| `BUSINESS_NAME` | no | White-label name |
+| `BUSINESS_TYPE` | no | Eyebrow / vertical label |
+| `APP_TITLE` | no | Document title |
+| `APP_DESCRIPTION` | no | Home lead text |
+| `ADMIN_TOKEN` | client prod | Protects `/admin` and `/api/admin/*` |
+| `CRM_ADAPTER` | no | `local` (default), `webhook`, `mock` |
+| `CRM_WEBHOOK_URL` | if webhook | Destination URL |
+| `CRM_WEBHOOK_SECRET` | recommended | HMAC + Bearer |
+| `CRM_WEBHOOK_TIMEOUT_MS` | no | Default `5000` |
+| `CRM_SYNC_ON_STARTUP` | no | Default `false` |
+| `RATE_LIMIT_WINDOW_MS` | no | Default `60000` |
+| `RATE_LIMIT_MAX` | no | Default `20` booking POSTs / IP / window |
 
-| Variable | Описание |
-|----------|----------|
-| `NODE_ENV` | `development` / `production` |
-| `APP_URL` | URL фронтенда (CORS) |
-| `API_PORT` | Порт API (default `3000`) |
-| `TELEGRAM_BOT_TOKEN` | Токен бота для проверки `initData` |
-| `ALLOW_DEMO_MODE` | Разрешить demo user без Telegram (`true`/`false`) |
-| `DATABASE_PATH` | Путь к SQLite файлу |
-| `TZ` | Таймзона слотов (default `Europe/Moscow`) |
-| `VITE_API_URL` | Base URL API для фронта (пусто = same-origin `/api`) |
+Never commit `.env`. Secrets are not sent to the frontend.
 
-Секреты не коммитить. Файл `.env` в `.gitignore`.
+## Admin
 
-## Telegram Mini App configuration
+`/admin` is an operational console: appointments with filters, masters, services, working hours, blocked slots.
 
-1. Создать бота в [@BotFather](https://t.me/BotFather).
-2. Получить `TELEGRAM_BOT_TOKEN`, положить в `.env`.
-3. Задеплоить HTTPS URL приложения.
-4. В BotFather: Bot Settings → Menu Button / Web App URL → указать `APP_URL`.
-5. Для production: `ALLOW_DEMO_MODE=false`.
+- Demo: `ADMIN_TOKEN` empty → public (acceptable for the public demo).
+- Client-ready: set `ADMIN_TOKEN` and open `/admin`, paste the token. Requests send `x-admin-token`.
 
-Backend читает заголовок `x-telegram-init-data` и валидирует подпись по [документации Telegram](https://core.telegram.org/bots/webapps#validating-data-received-via-the-mini-app).
+## Telegram Mini App
 
-## Demo mode
+1. Create a bot in [@BotFather](https://t.me/BotFather).
+2. Put `TELEGRAM_BOT_TOKEN` in env.
+3. Deploy HTTPS.
+4. BotFather → Menu Button / Web App URL → `APP_URL`.
+5. For a real bot, `ALLOW_DEMO_MODE=false` and a non-empty `ADMIN_TOKEN`.
 
-Если приложение открыто в обычном браузере без Telegram:
-
-- используется клиент `demo_client` (`telegram_user_id = 999000001`);
-- весь booking flow доступен без бота;
-- в UI показывается баннер Demo mode.
-
-Это сделано специально для локального QA и показа заказчику по ссылке.
-
-## Структура проекта
-
-```
-telegram-booking-miniapp/
-├── backend/
-│   ├── src/
-│   │   ├── db/           # schema, seed
-│   │   ├── middleware/   # Telegram auth
-│   │   ├── routes/       # REST handlers
-│   │   ├── services/     # booking + tests
-│   │   └── index.ts
-│   └── Dockerfile
-├── frontend/
-│   ├── src/
-│   │   ├── api/
-│   │   ├── components/
-│   │   ├── context/
-│   │   ├── pages/
-│   │   └── styles.css
-│   ├── nginx.conf
-│   └── Dockerfile
-├── Dockerfile          # single-service production image
-├── railway.toml
-├── docker-compose.yml
-├── .env.example
-└── README.md
-```
+Backend validates `x-telegram-init-data` per [Telegram docs](https://core.telegram.org/bots/webapps#validating-data-received-via-the-mini-app).
 
 ## API
 
-| Method | Path | Auth | Описание |
-|--------|------|------|----------|
-| GET | `/api/health` | — | Healthcheck |
-| GET | `/api/services` | — | Активные услуги |
-| GET | `/api/masters` | — | Активные мастера |
-| GET | `/api/masters?serviceId=` | — | Мастера, оказывающие услугу |
-| GET | `/api/availability?serviceId=&masterId=&days=` | — | Календарь слотов мастера |
-| GET | `/api/availability?serviceId=&masterId=&date=` | — | Слоты мастера на дату |
-| POST | `/api/appointments` | Telegram/demo | Создать запись (`masterId` обязателен) |
-| GET | `/api/appointments/me` | Telegram/demo | Мои будущие записи |
-| PATCH | `/api/appointments/:id/cancel` | Telegram/demo | Отменить |
-| DELETE | `/api/appointments/:id` | Telegram/demo | Отменить (alias) |
-| GET | `/api/admin/appointments` | — | Все записи (MVP без auth) |
+See [docs/API.md](docs/API.md).
 
-Создание записи защищено от double booking на backend (транзакция + overlap check).
+Double-booking is prevented per master inside a SQLite transaction (overlap check + busy intervals from appointments and blocked slots). Two masters may share the same clock time.
 
 ## Database
 
-Таблицы:
+SQLite tables:
 
-- `services` — услуги
-- `masters` — мастера
-- `master_services` — какие услуги оказывает мастер
-- `clients` — клиенты по `telegram_user_id`
-- `appointments` — записи (`confirmed` / `cancelled`) с обязательным `master_id`
-- `working_hours` — расписание мастера по weekday (0=вс … 6=сб)
-- `blocked_slots` — блокировки слотов конкретного мастера
+- `services`, `masters`, `master_services`
+- `clients` (keyed by `telegram_user_id`)
+- `appointments` (`confirmed` / `cancelled`, required `master_id`)
+- `working_hours`, `blocked_slots`
+- `schema_migrations`
 
-Seed при первом запуске:
+`applySchema()` is idempotent and backward-safe. Existing Railway files are not wiped. Seed runs only when a catalog table is empty.
 
-- 4 услуги (стрижки/борода)
-- 5 мастеров с разными расписаниями
-- все мастера оказывают все услуги
+First-run seed: 4 services, 5 masters, per-master hours, all masters offer all services.
 
 ## Scripts
 
 ```bash
-npm run build       # backend + frontend
-npm run lint        # eslint
-npm run typecheck   # tsc
-npm run test        # vitest (booking logic)
+npm run build
+npm run lint
+npm run typecheck
+npm run test
 ```
 
-## Deployment notes
+## Deployment (Railway)
 
-### Railway (рекомендуется для demo)
+Root `Dockerfile` + `railway.toml`, one service:
 
-Один сервис из корневого `Dockerfile` + `railway.toml`:
+1. Connect GitHub repo `telegram-booking-miniapp`.
+2. Volume mount `/data`, `DATABASE_PATH=/data/booking.db`.
+3. Env: `NODE_ENV=production`, `APP_URL`, `TZ`, `ALLOW_DEMO_MODE` as needed, optional `TELEGRAM_BOT_TOKEN`, `ADMIN_TOKEN`, CRM vars.
+4. Healthcheck: `GET /api/health`.
 
-1. Подключить GitHub repo `telegram-booking-miniapp`.
-2. Build: Dockerfile (root).
-3. Volume: mount path `/data`, переменная `DATABASE_PATH=/data/booking.db`.
-4. Env:
-   - `NODE_ENV=production`
-   - `DATABASE_PATH=/data/booking.db`
-   - `ALLOW_DEMO_MODE=true` (для browser demo)
-   - `APP_URL=https://<your-railway-domain>`
-   - `TZ=Europe/Moscow`
-   - `TELEGRAM_BOT_TOKEN=` (опционально до подключения бота)
-5. Healthcheck: `GET /api/health`.
-6. После выдачи публичного HTTPS URL обновить `APP_URL`.
+Redeploy does not delete appointments while the volume stays mounted.
 
-Redeploy не должен удалять записи, пока volume смонтирован на `/data`.
+## Extension points
 
-### Локальный single-service Docker
+| Add | Where |
+|-----|--------|
+| Bitrix24 / amoCRM / YCLIENTS / Altegio | `backend/src/integrations/crm/adapters/<vendor>.ts`, then `CRM_ADAPTER=` |
+| PostgreSQL | new repository implementation of `backend/src/repositories/types.ts` |
+| Analytics | `eventBus.on('booking.created', …)` in `backend/src/integrations/` |
+| Payments | after confirm, before or after `createAppointment` — keep slot lock in the booking transaction |
+| Telegram notifications | same event handlers; do not put HTTP in `services/booking.ts` |
 
-```bash
-DOCKER_HOST=unix:///var/run/docker.sock docker build -t booking-demo .
-DOCKER_HOST=unix:///var/run/docker.sock docker run --rm -p 3000:3000 \
-  -e ALLOW_DEMO_MODE=true \
-  -e APP_URL=http://localhost:3000 \
-  -v booking_data:/data \
-  booking-demo
+## Project layout
+
 ```
-
-HTTPS обязателен для Telegram Mini App.
+backend/src/
+  db/                 schema, seed, migrations
+  repositories/       SQLite adapters behind interfaces
+  services/           booking + availability
+  events/             in-process application events
+  integrations/crm/   local / webhook / mock adapters
+  routes/             HTTP
+  middleware/         Telegram auth, admin token, rate limit
+frontend/src/         Mini App UI
+docs/API.md
+```

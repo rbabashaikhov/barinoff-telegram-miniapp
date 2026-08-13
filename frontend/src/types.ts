@@ -56,3 +56,31 @@ export interface BookingDraft {
   date: string | null;
   startTime: string | null;
 }
+
+export interface AppConfig {
+  businessName: string;
+  businessType: string;
+  appTitle: string;
+  appDescription: string;
+  timezone: string;
+  demoMode: boolean;
+  adminProtected: boolean;
+}
+
+export interface WorkingHours {
+  id: number;
+  masterId?: number;
+  weekday: number;
+  startTime: string;
+  endTime: string;
+  active: boolean;
+}
+
+export interface BlockedSlot {
+  id: number;
+  masterId?: number;
+  date: string;
+  startTime: string;
+  endTime: string;
+  reason: string | null;
+}

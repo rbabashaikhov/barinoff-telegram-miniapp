@@ -4,7 +4,7 @@ import {
   minutesToTime,
   rangesOverlap,
   timeToMinutes,
-} from './booking.js';
+} from './slots.js';
 import type { WorkingHours } from '../types.js';
 
 const weekdayHours = (overrides: Partial<WorkingHours> = {}): WorkingHours => ({

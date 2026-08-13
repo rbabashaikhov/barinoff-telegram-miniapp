@@ -3,10 +3,12 @@ import { Link } from 'react-router-dom';
 import { api } from '../api/client';
 import { ServiceCard } from '../components/ServiceCard';
 import { useApp } from '../context/AppContext';
+import { useBusiness } from '../context/BusinessContext';
 import type { Service } from '../types';
 
 export function HomePage() {
   const { isDemo, user } = useApp();
+  const business = useBusiness();
   const [services, setServices] = useState<Service[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -38,9 +40,9 @@ export function HomePage() {
       )}
 
       <section className="hero-block">
-        <p className="eyebrow">Barbershop</p>
-        <h1 className="brand">Atelier Cut</h1>
-        <p className="lead">Онлайн-запись к барберу. Выберите услугу, мастера и удобное время.</p>
+        <p className="eyebrow">{business.businessType}</p>
+        <h1 className="brand">{business.businessName}</h1>
+        <p className="lead">{business.appDescription}</p>
         <Link className="btn btn-primary btn-block hero-cta" to="/services">
           Записаться
         </Link>

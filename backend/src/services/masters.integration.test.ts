@@ -2,6 +2,9 @@ import Database from 'better-sqlite3';
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
 import { seed } from '../db/index.js';
 import { applySchema } from '../db/schema.js';
+import { eventBus } from '../events/bus.js';
+import { createSqliteRepositories } from '../repositories/sqlite.js';
+import type { Repositories } from '../repositories/types.js';
 import {
   BookingConflictError,
   cancelAppointment,
@@ -10,11 +13,11 @@ import {
   listMasters,
 } from './booking.js';
 
-function setupDb(): Database.Database {
+function setup() {
   const db = new Database(':memory:');
   applySchema(db);
   seed(db);
-  return db;
+  return { db, repos: createSqliteRepositories(db) };
 }
 
 const ALEXANDER = 1;
@@ -24,17 +27,19 @@ const now = new Date(2026, 7, 12, 8, 0, 0);
 
 describe('masters and per-master booking', () => {
   let db: Database.Database;
+  let repos: Repositories;
 
   beforeEach(() => {
-    db = setupDb();
+    ({ db, repos } = setup());
   });
 
   afterEach(() => {
+    eventBus.clear();
     db.close();
   });
 
   it('returns seeded active masters', () => {
-    const masters = listMasters(db);
+    const masters = listMasters(repos);
     expect(masters.map((m) => m.name)).toEqual([
       'Александр',
       'Максим',
@@ -45,14 +50,14 @@ describe('masters and per-master booking', () => {
   });
 
   it('filters masters by service', () => {
-    const forHaircut = listMasters(db, 1);
+    const forHaircut = listMasters(repos, 1);
     expect(forHaircut).toHaveLength(5);
 
     db.prepare('DELETE FROM master_services WHERE master_id = ? AND service_id = ?').run(
       MAXIM,
       1,
     );
-    const filtered = listMasters(db, 1);
+    const filtered = listMasters(repos, 1);
     expect(filtered.map((m) => m.id)).not.toContain(MAXIM);
     expect(filtered).toHaveLength(4);
   });
@@ -61,9 +66,9 @@ describe('masters and per-master booking', () => {
     const monday = '2026-08-17';
     const sunday = '2026-08-16';
 
-    const alexanderMonday = getAvailableSlots(db, 1, ALEXANDER, monday, now);
-    const maximMonday = getAvailableSlots(db, 1, MAXIM, monday, now);
-    const artemMonday = getAvailableSlots(db, 1, ARTEM, monday, now);
+    const alexanderMonday = getAvailableSlots(repos, 1, ALEXANDER, monday, now);
+    const maximMonday = getAvailableSlots(repos, 1, MAXIM, monday, now);
+    const artemMonday = getAvailableSlots(repos, 1, ARTEM, monday, now);
 
     expect(alexanderMonday).toContain('10:00');
     expect(alexanderMonday).toContain('19:00');
@@ -71,12 +76,12 @@ describe('masters and per-master booking', () => {
     expect(maximMonday).not.toContain('18:00');
     expect(artemMonday).toEqual([]);
 
-    expect(getAvailableSlots(db, 1, ALEXANDER, sunday, now)).toEqual([]);
-    expect(getAvailableSlots(db, 1, 4, sunday, now)).toContain('10:00');
+    expect(getAvailableSlots(repos, 1, ALEXANDER, sunday, now)).toEqual([]);
+    expect(getAvailableSlots(repos, 1, 4, sunday, now)).toContain('10:00');
   });
 
-  it('stores master_id on appointment', () => {
-    const created = createAppointment(db, {
+  it('stores master_id on appointment', async () => {
+    const created = await createAppointment(repos, {
       user: { id: 10, first_name: 'Ivan' },
       serviceId: 1,
       masterId: MAXIM,
@@ -88,10 +93,10 @@ describe('masters and per-master booking', () => {
     expect(created.master_name).toBe('Максим');
   });
 
-  it('forbids overlap for one master and allows the same slot for another', () => {
+  it('forbids overlap for one master and allows the same slot for another', async () => {
     const date = '2026-08-17';
 
-    createAppointment(db, {
+    await createAppointment(repos, {
       user: { id: 11, first_name: 'A' },
       serviceId: 1,
       masterId: ALEXANDER,
@@ -100,8 +105,8 @@ describe('masters and per-master booking', () => {
       now,
     });
 
-    expect(() =>
-      createAppointment(db, {
+    await expect(
+      createAppointment(repos, {
         user: { id: 12, first_name: 'B' },
         serviceId: 1,
         masterId: ALEXANDER,
@@ -109,9 +114,9 @@ describe('masters and per-master booking', () => {
         startTime: '12:00',
         now,
       }),
-    ).toThrow(BookingConflictError);
+    ).rejects.toBeInstanceOf(BookingConflictError);
 
-    const other = createAppointment(db, {
+    const other = await createAppointment(repos, {
       user: { id: 13, first_name: 'C' },
       serviceId: 1,
       masterId: MAXIM,
@@ -120,8 +125,8 @@ describe('masters and per-master booking', () => {
       now,
     });
     expect(other.master_id).toBe(MAXIM);
-    expect(getAvailableSlots(db, 1, MAXIM, date, now)).not.toContain('12:00');
-    expect(getAvailableSlots(db, 1, ALEXANDER, date, now)).not.toContain('12:00');
+    expect(getAvailableSlots(repos, 1, MAXIM, date, now)).not.toContain('12:00');
+    expect(getAvailableSlots(repos, 1, ALEXANDER, date, now)).not.toContain('12:00');
   });
 
   it('blocked slot of one master does not block another', () => {
@@ -133,13 +138,13 @@ describe('masters and per-master booking', () => {
     `,
     ).run(ALEXANDER, date);
 
-    expect(getAvailableSlots(db, 1, ALEXANDER, date, now)).not.toContain('12:00');
-    expect(getAvailableSlots(db, 1, MAXIM, date, now)).toContain('12:00');
+    expect(getAvailableSlots(repos, 1, ALEXANDER, date, now)).not.toContain('12:00');
+    expect(getAvailableSlots(repos, 1, MAXIM, date, now)).toContain('12:00');
   });
 
-  it('cancel restores the slot only for that master', () => {
+  it('cancel restores the slot only for that master', async () => {
     const date = '2026-08-18';
-    const created = createAppointment(db, {
+    const created = await createAppointment(repos, {
       user: { id: 20, first_name: 'Anna' },
       serviceId: 1,
       masterId: ALEXANDER,
@@ -148,7 +153,7 @@ describe('masters and per-master booking', () => {
       now,
     });
 
-    createAppointment(db, {
+    await createAppointment(repos, {
       user: { id: 21, first_name: 'Oleg' },
       serviceId: 1,
       masterId: MAXIM,
@@ -157,12 +162,12 @@ describe('masters and per-master booking', () => {
       now,
     });
 
-    expect(getAvailableSlots(db, 1, ALEXANDER, date, now)).not.toContain('14:00');
-    expect(getAvailableSlots(db, 1, MAXIM, date, now)).not.toContain('14:00');
+    expect(getAvailableSlots(repos, 1, ALEXANDER, date, now)).not.toContain('14:00');
+    expect(getAvailableSlots(repos, 1, MAXIM, date, now)).not.toContain('14:00');
 
-    cancelAppointment(db, created.id, 20);
+    await cancelAppointment(repos, created.id, 20);
 
-    expect(getAvailableSlots(db, 1, ALEXANDER, date, now)).toContain('14:00');
-    expect(getAvailableSlots(db, 1, MAXIM, date, now)).not.toContain('14:00');
+    expect(getAvailableSlots(repos, 1, ALEXANDER, date, now)).toContain('14:00');
+    expect(getAvailableSlots(repos, 1, MAXIM, date, now)).not.toContain('14:00');
   });
 });
