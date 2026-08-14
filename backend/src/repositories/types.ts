@@ -22,6 +22,7 @@ export interface MastersRepository {
   getById(id: number): Master | undefined;
   getActiveById(id: number): Master | undefined;
   offersService(masterId: number, serviceId: number): boolean;
+  listServiceIds(masterId: number): number[];
 }
 
 export interface ClientsRepository {

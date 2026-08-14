@@ -177,6 +177,56 @@ const MIGRATIONS: Array<{ id: string; up: (database: Database.Database) => void 
     id: '001_baseline',
     up: applySchema,
   },
+  {
+    id: '002_demo_master_specialization',
+    up(database) {
+      const intended: Record<string, string[]> = {
+        Александр: ['Мужская стрижка', 'Стрижка + борода'],
+        Максим: ['Мужская стрижка', 'Стрижка + борода', 'Оформление бороды'],
+        Артём: ['Мужская стрижка', 'Стрижка + борода', 'Оформление бороды'],
+        Даниил: ['Мужская стрижка', 'Детская стрижка'],
+        Никита: ['Мужская стрижка', 'Оформление бороды', 'Детская стрижка'],
+      };
+
+      const masters = database.prepare('SELECT id, name FROM masters').all() as Array<{
+        id: number;
+        name: string;
+      }>;
+      const services = database.prepare('SELECT id, name FROM services').all() as Array<{
+        id: number;
+        name: string;
+      }>;
+      if (masters.length === 0 || services.length === 0) return;
+
+      const serviceIdByName = new Map(services.map((service) => [service.name, service.id]));
+      const deleteUnused = database.prepare(
+        `
+        DELETE FROM master_services
+        WHERE master_id = ? AND service_id = ?
+          AND NOT EXISTS (
+            SELECT 1 FROM appointments
+            WHERE master_id = ? AND service_id = ?
+          )
+        `,
+      );
+
+      database.transaction(() => {
+        for (const master of masters) {
+          const names = intended[master.name];
+          if (!names) continue;
+          const keep = new Set(
+            names
+              .map((name) => serviceIdByName.get(name))
+              .filter((id): id is number => Boolean(id)),
+          );
+          for (const service of services) {
+            if (keep.has(service.id)) continue;
+            deleteUnused.run(master.id, service.id, master.id, service.id);
+          }
+        }
+      })();
+    },
+  },
 ];
 
 export function migrate(database: Database.Database = db): void {

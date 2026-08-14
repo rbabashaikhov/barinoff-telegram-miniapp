@@ -18,6 +18,8 @@ services:
       APP_TITLE: ${APP_TITLE:-Service Booking}
       APP_DESCRIPTION: ${APP_DESCRIPTION:-Онлайн-запись. Выберите услугу, мастера и удобное время.}
       ADMIN_TOKEN: ${ADMIN_TOKEN:-}
+      FEATURE_DEMO_TOUR: ${FEATURE_DEMO_TOUR:-true}
+      FEATURE_DEMO_ADMIN_PREVIEW: ${FEATURE_DEMO_ADMIN_PREVIEW:-true}
       CRM_ADAPTER: ${CRM_ADAPTER:-local}
       CRM_WEBHOOK_URL: ${CRM_WEBHOOK_URL:-}
       CRM_WEBHOOK_SECRET: ${CRM_WEBHOOK_SECRET:-}

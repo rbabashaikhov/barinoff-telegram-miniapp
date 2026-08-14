@@ -46,11 +46,11 @@ export function TimePage() {
       {loading && <div className="loading">Загрузка слотов…</div>}
       {error && <div className="error-box">{error}</div>}
       {!loading && !error && slots.length === 0 && (
-        <div className="empty-state">На этот день свободных слотов нет</div>
+        <div className="empty-state" data-demo-tour="available-slots">На этот день свободных слотов нет</div>
       )}
 
       {!loading && slots.length > 0 && (
-        <div className="slots-scroll">
+        <div className="slots-scroll" data-demo-tour="available-slots">
           <div className="slots-grid">
             {slots.map((slot) => (
               <button

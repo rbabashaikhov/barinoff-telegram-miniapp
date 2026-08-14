@@ -16,6 +16,7 @@ interface BookingState {
   setMaster: (master: Master) => void;
   setDate: (date: string) => void;
   setStartTime: (time: string) => void;
+  selectMasterAndDate: (master: Master, date: string) => void;
   reset: () => void;
 }
 
@@ -49,6 +50,11 @@ export function BookingProvider({ children }: { children: ReactNode }) {
         setStartTimeState(null);
       },
       setStartTime: setStartTimeState,
+      selectMasterAndDate: (nextMaster, nextDate) => {
+        setMasterState(nextMaster);
+        setDateState(nextDate);
+        setStartTimeState(null);
+      },
       reset: () => {
         setServiceState(null);
         setMasterState(null);

@@ -46,6 +46,10 @@ export const config = {
   admin: {
     token: (process.env.ADMIN_TOKEN || '').trim(),
   },
+  features: {
+    demoTour: boolEnv(process.env.FEATURE_DEMO_TOUR, true),
+    demoAdminPreview: boolEnv(process.env.FEATURE_DEMO_ADMIN_PREVIEW, true),
+  },
   crm: {
     adapter: crmAdapterName(process.env.CRM_ADAPTER),
     webhookUrl: process.env.CRM_WEBHOOK_URL || '',
@@ -68,5 +72,18 @@ export function publicAppConfig() {
     timezone: config.timezone,
     demoMode: config.allowDemoMode,
     adminProtected: config.isProduction || Boolean(config.admin.token),
+    features: {
+      demoTour: config.features.demoTour,
+      demoAdminPreview: config.features.demoAdminPreview,
+    },
   };
+}
+
+export function isDemoAdminPreviewEnabled(
+  cfg: {
+    allowDemoMode: boolean;
+    features: { demoAdminPreview: boolean };
+  } = config,
+): boolean {
+  return cfg.allowDemoMode && cfg.features.demoAdminPreview;
 }

@@ -42,7 +42,7 @@ adminRouter.get('/services', (_req, res) => {
 });
 
 adminRouter.get('/masters', (_req, res) => {
-  res.json({ data: repos.masters.listAll().map(serializeMaster) });
+  res.json({ data: repos.masters.listAll().map((master) => serializeMaster(master)) });
 });
 
 adminRouter.get('/working-hours', (req, res) => {

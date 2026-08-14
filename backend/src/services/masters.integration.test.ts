@@ -53,6 +53,9 @@ describe('masters and per-master booking', () => {
     const forHaircut = listMasters(repos, 1);
     expect(forHaircut).toHaveLength(5);
 
+    const forBeard = listMasters(repos, 3);
+    expect(forBeard.map((m) => m.name)).toEqual(['Максим', 'Артём', 'Никита']);
+
     db.prepare('DELETE FROM master_services WHERE master_id = ? AND service_id = ?').run(
       MAXIM,
       1,

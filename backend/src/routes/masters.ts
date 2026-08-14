@@ -27,5 +27,5 @@ mastersRouter.get('/', (req, res) => {
     return;
   }
 
-  res.json({ data: listMasters(repos, serviceId).map(serializeMaster) });
+  res.json({ data: listMasters(repos, serviceId).map((master) => serializeMaster(master)) });
 });

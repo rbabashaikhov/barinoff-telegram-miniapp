@@ -84,7 +84,54 @@ const MASTER_HOURS: Record<string, HoursSpec[]> = {
   Никита: hoursForDays([1, 2, 3, 4, 5], '12:00', '20:00'),
 };
 
-export function seed(db: Database.Database): void {
+const MASTER_SERVICE_NAMES: Record<string, readonly string[]> = {
+  Александр: ['Мужская стрижка', 'Стрижка + борода'],
+  Максим: ['Мужская стрижка', 'Стрижка + борода', 'Оформление бороды'],
+  Артём: ['Мужская стрижка', 'Стрижка + борода', 'Оформление бороды'],
+  Даниил: ['Мужская стрижка', 'Детская стрижка'],
+  Никита: ['Мужская стрижка', 'Оформление бороды', 'Детская стрижка'],
+};
+
+const DEMO_TELEGRAM_USER_ID = 999000001;
+const OCCUPIED_TELEGRAM_USER_ID = 999000002;
+
+function toDateString(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+function findFutureWeekday(now: Date, weekday: number, minDaysAhead = 7): string {
+  const date = new Date(now);
+  date.setHours(0, 0, 0, 0);
+  date.setDate(date.getDate() + minDaysAhead);
+  while (date.getDay() !== weekday) {
+    date.setDate(date.getDate() + 1);
+  }
+  return toDateString(date);
+}
+
+function upsertClient(
+  db: Database.Database,
+  user: { telegramUserId: number; username: string; firstName: string; lastName: string },
+): number {
+  const existing = db
+    .prepare('SELECT id FROM clients WHERE telegram_user_id = ?')
+    .get(user.telegramUserId) as { id: number } | undefined;
+  if (existing) return existing.id;
+  const inserted = db
+    .prepare(
+      `
+      INSERT INTO clients (telegram_user_id, username, first_name, last_name)
+      VALUES (?, ?, ?, ?)
+    `,
+    )
+    .run(user.telegramUserId, user.username, user.firstName, user.lastName);
+  return Number(inserted.lastInsertRowid);
+}
+
+export function seed(db: Database.Database, now = new Date()): void {
   const serviceCount = db.prepare('SELECT COUNT(*) AS count FROM services').get() as {
     count: number;
   };
@@ -124,13 +171,29 @@ export function seed(db: Database.Database): void {
   };
 
   if (linkCount.count === 0) {
-    db.exec(`
-      INSERT INTO master_services (master_id, service_id)
-      SELECT m.id, s.id
-      FROM masters m
-      CROSS JOIN services s
-      WHERE m.active = 1 AND s.active = 1
-    `);
+    const insertLink = db.prepare(
+      'INSERT INTO master_services (master_id, service_id) VALUES (?, ?)',
+    );
+    const masters = db.prepare('SELECT id, name FROM masters').all() as Array<{
+      id: number;
+      name: string;
+    }>;
+    const services = db.prepare('SELECT id, name FROM services').all() as Array<{
+      id: number;
+      name: string;
+    }>;
+    const serviceIdByName = new Map(services.map((service) => [service.name, service.id]));
+
+    db.transaction(() => {
+      for (const master of masters) {
+        const names = MASTER_SERVICE_NAMES[master.name];
+        if (!names) continue;
+        for (const name of names) {
+          const serviceId = serviceIdByName.get(name);
+          if (serviceId) insertLink.run(master.id, serviceId);
+        }
+      }
+    })();
   }
 
   const hoursCount = db
@@ -170,5 +233,69 @@ export function seed(db: Database.Database): void {
     db.prepare(
       `UPDATE blocked_slots SET master_id = ? WHERE master_id IS NULL`,
     ).run(defaultMaster.id);
+  }
+
+  const friday = findFutureWeekday(now, 5, 7);
+  const alexander = db.prepare(`SELECT id FROM masters WHERE name = 'Александр'`).get() as
+    | { id: number }
+    | undefined;
+  const maxim = db.prepare(`SELECT id FROM masters WHERE name = 'Максим'`).get() as
+    | { id: number }
+    | undefined;
+  const haircut = db.prepare(`SELECT id FROM services WHERE name = 'Мужская стрижка'`).get() as
+    | { id: number }
+    | undefined;
+
+  const blockedCount = db.prepare('SELECT COUNT(*) AS count FROM blocked_slots').get() as {
+    count: number;
+  };
+  if (blockedCount.count === 0 && alexander) {
+    db.prepare(
+      `
+      INSERT INTO blocked_slots (master_id, blocked_date, start_time, end_time, reason)
+      VALUES (?, ?, '15:00', '16:00', 'Обед')
+    `,
+    ).run(alexander.id, friday);
+  }
+
+  if (!haircut || !alexander || !maxim) return;
+
+  const demoClientId = upsertClient(db, {
+    telegramUserId: DEMO_TELEGRAM_USER_ID,
+    username: 'demo_client',
+    firstName: 'Demo',
+    lastName: 'Client',
+  });
+  const occupiedClientId = upsertClient(db, {
+    telegramUserId: OCCUPIED_TELEGRAM_USER_ID,
+    username: 'occupied_client',
+    firstName: 'Иван',
+    lastName: 'Петров',
+  });
+
+  const demoAppointments = db
+    .prepare('SELECT COUNT(*) AS count FROM appointments WHERE client_id = ?')
+    .get(demoClientId) as { count: number };
+  if (demoAppointments.count === 0) {
+    db.prepare(
+      `
+      INSERT INTO appointments (
+        client_id, service_id, master_id, appointment_date, start_time, end_time, status
+      ) VALUES (?, ?, ?, ?, '11:00', '12:00', 'confirmed')
+    `,
+    ).run(demoClientId, haircut.id, alexander.id, friday);
+  }
+
+  const occupiedCount = db
+    .prepare('SELECT COUNT(*) AS count FROM appointments WHERE client_id = ?')
+    .get(occupiedClientId) as { count: number };
+  if (occupiedCount.count === 0) {
+    db.prepare(
+      `
+      INSERT INTO appointments (
+        client_id, service_id, master_id, appointment_date, start_time, end_time, status
+      ) VALUES (?, ?, ?, ?, '10:00', '11:00', 'confirmed')
+    `,
+    ).run(occupiedClientId, haircut.id, maxim.id, friday);
   }
 }

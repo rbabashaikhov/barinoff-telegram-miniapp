@@ -169,6 +169,8 @@ DOCKER_HOST=unix:///var/run/docker.sock docker compose up --build
 | `APP_TITLE` | no | Document title |
 | `APP_DESCRIPTION` | no | Home lead text |
 | `ADMIN_TOKEN` | Protects `/api/admin`. Required in production; empty token **locks** admin there. Local/dev may leave it empty for an open console |
+| `FEATURE_DEMO_TOUR` | Guided sales tour in browser demo. Demo `true`. Set `false` for a live client |
+| `FEATURE_DEMO_ADMIN_PREVIEW` | Public read-only `/demo/admin`. Demo `true`. Set `false` for a live client |
 | `CRM_ADAPTER` | no | `local` (default), `webhook`, `mock` |
 | `CRM_WEBHOOK_URL` | if webhook | Destination URL |
 | `CRM_WEBHOOK_SECRET` | recommended | HMAC + Bearer |
@@ -185,6 +187,34 @@ Never commit `.env`. Secrets are not sent to the frontend.
 
 - Local/dev: `ADMIN_TOKEN` empty → public console (convenience only).
 - Production: empty `ADMIN_TOKEN` **locks** `/api/admin` (`401`). Set a token, open `/admin`, paste it. Requests send `x-admin-token`.
+
+Sales visitors should use `/demo/admin`, not `/admin`.
+
+## Sales Demo Mode
+
+Sales Demo Mode is for a prospective buyer, not barbershop-client onboarding. It only runs in **browser demo** (`ALLOW_DEMO_MODE`, no Telegram `initData`). It does not auto-start inside a real Telegram Mini App, a live client production mode, or `/admin`.
+
+### Guided Barber tour
+
+On the first browser visit a short sheet offers a 30-second walkthrough:
+
+**Service → Master → Date → Slot → Confirm → Appointment**
+
+The tour highlights real UI through `data-demo-tour` hooks (`DemoTourDefinition` + `TourStep[]` in `frontend/src/demo-tour/`). It is not a slide deck. Steps: service selection, masters eligible for that service, free slots from that master's schedule, confirmation, and the client's appointments (including cancellation). The tour can fill the booking draft so confirmation is a real screen; it does **not** create appointments in the background.
+
+First-run state is stored in `localStorage` (`barber.salesDemoTour.v1`). Skip or complete once and the intro will not auto-open again. Restart anytime with **Как это работает?** next to the **Демо** badge.
+
+Disable without deleting code: `FEATURE_DEMO_TOUR=false`.
+
+### Read-only admin preview
+
+`/demo/admin` is a public preview of appointments, services, masters, and schedule. It uses `GET /api/demo-admin/*` against the same SQLite demo data. There are no POST/PUT/PATCH/DELETE demo-admin routes; the API returns `405 DEMO_ADMIN_READ_ONLY` for mutations. It does **not** receive `ADMIN_TOKEN` and does not proxy `/api/admin`.
+
+The preview also notes that the app is CRM-ready via webhook and the integration layer. It does not show internal payloads.
+
+`/admin` stays the real console: `ADMIN_TOKEN`, write-capable, owner-only. Production with an empty token still locks `/api/admin`.
+
+Disable without deleting code: `FEATURE_DEMO_ADMIN_PREVIEW=false` (also hidden when `ALLOW_DEMO_MODE` is off).
 
 ## Telegram Mini App
 
@@ -214,7 +244,7 @@ SQLite tables:
 
 `applySchema()` is idempotent and backward-safe. Existing Railway files are not wiped. Seed runs only when a catalog table is empty.
 
-First-run seed: 4 services, 5 masters, per-master hours, all masters offer all services.
+First-run seed: 4 services, 5 masters with different service coverage, per-master hours, a demo blocked slot, and a couple of occupied appointments so availability is visibly schedule-based.
 
 ## Scripts
 
@@ -231,7 +261,7 @@ Root `Dockerfile` + `railway.toml`, one service:
 
 1. Connect GitHub repo `telegram-booking-miniapp`.
 2. Volume mount `/data`, `DATABASE_PATH=/data/booking.db`.
-3. Env: `NODE_ENV=production`, `APP_URL`, `TZ`, `ALLOW_DEMO_MODE` as needed, a non-empty `ADMIN_TOKEN`, optional `TELEGRAM_BOT_TOKEN`, CRM vars.
+3. Env: `NODE_ENV=production`, `APP_URL`, `TZ`, `ALLOW_DEMO_MODE` as needed, a non-empty `ADMIN_TOKEN`, optional `TELEGRAM_BOT_TOKEN`, CRM vars. Demo production keeps `FEATURE_DEMO_TOUR=true` and `FEATURE_DEMO_ADMIN_PREVIEW=true`.
 4. Healthcheck: `GET /api/health`.
 
 Redeploy does not delete appointments while the volume stays mounted.

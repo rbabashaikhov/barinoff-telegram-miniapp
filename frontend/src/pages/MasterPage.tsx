@@ -47,22 +47,24 @@ export function MasterPage() {
       {loading && <div className="loading">Загрузка…</div>}
       {error && <div className="error-box">{error}</div>}
       {!loading && masters.length === 0 && (
-        <div className="empty-state">Для этой услуги пока нет мастеров</div>
+        <div className="empty-state" data-demo-tour="master-selection">Для этой услуги пока нет мастеров</div>
       )}
 
-      <div className="stack">
-        {masters.map((item) => (
-          <MasterCard
-            key={item.id}
-            master={item}
-            selected={selectedId === item.id}
-            onSelect={(selected) => {
-              setMaster(selected);
-              navigate('/booking/date');
-            }}
-          />
-        ))}
-      </div>
+      {!loading && masters.length > 0 && (
+        <div className="stack" data-demo-tour="master-selection">
+          {masters.map((item) => (
+            <MasterCard
+              key={item.id}
+              master={item}
+              selected={selectedId === item.id}
+              onSelect={(selected) => {
+                setMaster(selected);
+                navigate('/booking/date');
+              }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

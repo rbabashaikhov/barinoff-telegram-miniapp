@@ -9,6 +9,7 @@ export const DEFAULT_APP_CONFIG: AppConfig = {
   timezone: 'Europe/Moscow',
   demoMode: true,
   adminProtected: false,
+  features: { demoTour: true, demoAdminPreview: true },
 };
 
 export const BusinessContext = createContext<AppConfig>(DEFAULT_APP_CONFIG);

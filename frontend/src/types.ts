@@ -14,6 +14,7 @@ export interface Master {
   description: string;
   active: boolean;
   displayOrder: number;
+  serviceIds?: number[];
 }
 
 export interface Appointment {
@@ -65,6 +66,10 @@ export interface AppConfig {
   timezone: string;
   demoMode: boolean;
   adminProtected: boolean;
+  features: {
+    demoTour: boolean;
+    demoAdminPreview: boolean;
+  };
 }
 
 export interface WorkingHours {

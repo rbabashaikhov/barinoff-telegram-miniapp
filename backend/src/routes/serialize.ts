@@ -40,7 +40,7 @@ export function serializeService(service: Service) {
   };
 }
 
-export function serializeMaster(master: Master) {
+export function serializeMaster(master: Master, serviceIds?: number[]) {
   return {
     id: master.id,
     name: master.name,
@@ -48,6 +48,7 @@ export function serializeMaster(master: Master) {
     description: master.description,
     active: Boolean(master.active),
     displayOrder: master.display_order,
+    ...(serviceIds ? { serviceIds } : {}),
   };
 }
 

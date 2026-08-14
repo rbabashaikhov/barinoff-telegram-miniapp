@@ -192,7 +192,7 @@ describe('adminAuthMiddleware', () => {
   });
 
   it('does not wrap public client API routes', () => {
-    const files = ['services.ts', 'masters.ts', 'appointments.ts', 'availability.ts', 'config.ts'];
+    const files = ['services.ts', 'masters.ts', 'appointments.ts', 'availability.ts', 'config.ts', 'demoAdmin.ts'];
     for (const file of files) {
       const source = fs.readFileSync(new URL(`../routes/${file}`, import.meta.url), 'utf8');
       expect(source, file).not.toContain('adminAuthMiddleware');

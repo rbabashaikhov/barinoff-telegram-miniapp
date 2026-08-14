@@ -132,4 +132,12 @@ export const api = {
     }),
   deleteBlockedSlot: (id: number) =>
     request<void>(`/api/admin/blocked-slots/${id}`, { method: 'DELETE' }),
+  getDemoAdminAppointments: () => request<{ data: Appointment[] }>('/api/demo-admin/appointments'),
+  getDemoAdminServices: () => request<{ data: Service[] }>('/api/demo-admin/services'),
+  getDemoAdminMasters: () => request<{ data: Master[] }>('/api/demo-admin/masters'),
+  getDemoAdminWorkingHours: (masterId?: number) =>
+    request<{ data: WorkingHours[] }>(
+      masterId ? `/api/demo-admin/working-hours?masterId=${masterId}` : '/api/demo-admin/working-hours',
+    ),
+  getDemoAdminBlockedSlots: () => request<{ data: BlockedSlot[] }>('/api/demo-admin/blocked-slots'),
 };

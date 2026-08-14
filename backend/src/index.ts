@@ -16,6 +16,7 @@ import { adminRouter } from './routes/admin.js';
 import { appointmentsRouter } from './routes/appointments.js';
 import { availabilityRouter } from './routes/availability.js';
 import { configRouter } from './routes/config.js';
+import { demoAdminRouter } from './routes/demoAdmin.js';
 import { mastersRouter } from './routes/masters.js';
 import { servicesRouter } from './routes/services.js';
 
@@ -101,6 +102,7 @@ app.use('/api/services', servicesRouter);
 app.use('/api/masters', mastersRouter);
 app.use('/api/availability', availabilityRouter);
 app.use('/api/appointments', appointmentsRouter);
+app.use('/api/demo-admin', demoAdminRouter);
 app.use('/api/admin', adminRouter);
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));

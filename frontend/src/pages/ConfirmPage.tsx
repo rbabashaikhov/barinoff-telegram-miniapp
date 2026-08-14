@@ -38,7 +38,7 @@ export function ConfirmPage() {
     <div className="page">
       <TopBar title="Подтверждение" backTo="/booking/time" />
 
-      <div className="summary-card">
+      <div className="summary-card" data-demo-tour="booking-confirmation">
         <div className="summary-row">
           <span>Услуга</span>
           <span>{service.name}</span>

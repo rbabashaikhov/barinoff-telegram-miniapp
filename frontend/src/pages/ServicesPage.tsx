@@ -36,18 +36,20 @@ export function ServicesPage() {
       <TopBar title="Услуги" backTo="/" />
       {loading && <div className="loading">Загрузка…</div>}
       {error && <div className="error-box">{error}</div>}
-      <div className="stack">
-        {services.map((service) => (
-          <ServiceCard
-            key={service.id}
-            service={service}
-            onSelect={(selected) => {
-              setService(selected);
-              navigate('/booking/master');
-            }}
-          />
-        ))}
-      </div>
+      {!loading && (
+        <div className="stack" data-demo-tour="service-selection">
+          {services.map((service) => (
+            <ServiceCard
+              key={service.id}
+              service={service}
+              onSelect={(selected) => {
+                setService(selected);
+                navigate('/booking/master');
+              }}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }

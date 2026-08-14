@@ -65,6 +65,20 @@ In production an empty `ADMIN_TOKEN` **locks** `/api/admin` (`401 ADMIN_UNAUTHOR
 | POST | `/api/admin/blocked-slots` | Create a block |
 | DELETE | `/api/admin/blocked-slots/:id` | Remove a block |
 
+## Demo admin preview
+
+Public sales preview. No `ADMIN_TOKEN`. Enabled only when `ALLOW_DEMO_MODE` and `FEATURE_DEMO_ADMIN_PREVIEW` are on. Frontend: `/demo/admin`.
+
+| Method | Path | Description |
+|--------|------|-------------|
+| GET | `/api/demo-admin/appointments` | Same appointment fields as admin GET |
+| GET | `/api/demo-admin/services` | Services |
+| GET | `/api/demo-admin/masters` | Masters + `serviceIds` |
+| GET | `/api/demo-admin/working-hours` | Working hours |
+| GET | `/api/demo-admin/blocked-slots` | Blocked slots |
+
+POST/PUT/PATCH/DELETE on `/api/demo-admin/*` return `405 DEMO_ADMIN_READ_ONLY`. There is no write path.
+
 ## Status codes
 
 | Code | When |
@@ -77,4 +91,5 @@ In production an empty `ADMIN_TOKEN` **locks** `/api/admin` (`401 ADMIN_UNAUTHOR
 | 404 | Service / master / appointment missing |
 | 409 | Slot taken (`SLOT_UNAVAILABLE`) |
 | 429 | Booking rate limit |
+| 405 | Demo admin mutation (`DEMO_ADMIN_READ_ONLY`) |
 | 503 | Database unavailable on `/health` |

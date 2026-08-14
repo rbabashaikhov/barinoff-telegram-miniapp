@@ -4,11 +4,13 @@ import { api } from '../api/client';
 import { ServiceCard } from '../components/ServiceCard';
 import { useApp } from '../context/AppContext';
 import { useBusiness } from '../context/BusinessContext';
+import { useDemoTour } from '../demo-tour/context';
 import type { Service } from '../types';
 
 export function HomePage() {
   const { isDemo, user } = useApp();
   const business = useBusiness();
+  const tour = useDemoTour();
   const [services, setServices] = useState<Service[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -33,7 +35,7 @@ export function HomePage() {
 
   return (
     <div className="page">
-      {isDemo && (
+      {isDemo && !tour.showChrome && (
         <div className="demo-banner">
           Demo mode · Клиент {user.firstName || user.username}
         </div>

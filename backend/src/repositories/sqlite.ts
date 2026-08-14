@@ -125,6 +125,15 @@ function createMastersRepo(db: Database.Database): MastersRepository {
         .get(masterId, serviceId) as { ok: number } | undefined;
       return Boolean(row);
     },
+    listServiceIds(masterId: number) {
+      return (
+        db
+          .prepare(
+            'SELECT service_id FROM master_services WHERE master_id = ? ORDER BY service_id',
+          )
+          .all(masterId) as Array<{ service_id: number }>
+      ).map((row) => row.service_id);
+    },
   };
 }
 

@@ -100,18 +100,18 @@ describe('booking persistence', () => {
 
     const created = await createAppointment(repos, {
       user: { id: 444, username: 'client4', first_name: 'Anna' },
-      serviceId: 3,
+      serviceId: 1,
       masterId: ALEXANDER,
       date,
       startTime: '15:00',
       now,
     });
 
-    expect(getAvailableSlots(repos, 3, ALEXANDER, date, now)).not.toContain('15:00');
+    expect(getAvailableSlots(repos, 1, ALEXANDER, date, now)).not.toContain('15:00');
 
     await cancelAppointment(repos, created.id, 444);
 
-    expect(getAvailableSlots(repos, 3, ALEXANDER, date, now)).toContain('15:00');
+    expect(getAvailableSlots(repos, 1, ALEXANDER, date, now)).toContain('15:00');
   });
 
   it('excludes blocked slots from availability and booking', async () => {

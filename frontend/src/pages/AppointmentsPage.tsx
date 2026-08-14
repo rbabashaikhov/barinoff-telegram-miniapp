@@ -47,7 +47,7 @@ export function AppointmentsPage() {
       {error && <div className="error-box">{error}</div>}
 
       {!loading && items.length === 0 && (
-        <div className="empty-state">
+        <div className="empty-state" data-demo-tour="my-appointments">
           Предстоящих записей нет.
           <div style={{ marginTop: 16 }}>
             <Link className="btn btn-primary" to="/services">
@@ -57,7 +57,8 @@ export function AppointmentsPage() {
         </div>
       )}
 
-      <div className="stack">
+      {!loading && items.length > 0 && (
+      <div className="stack" data-demo-tour="my-appointments">
         {items.map((item) => (
           <article
             key={item.id}
@@ -94,6 +95,7 @@ export function AppointmentsPage() {
           </article>
         ))}
       </div>
+      )}
     </div>
   );
 }
