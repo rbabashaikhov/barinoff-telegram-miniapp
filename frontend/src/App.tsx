@@ -23,7 +23,7 @@ export default function App() {
       {tour.showChrome && (
         <DemoChrome
           showTour={tour.demoTourEnabled}
-          showAdmin={tour.demoAdminPreviewEnabled}
+          showAdmin={tour.showDemoAdminNav}
           onStartTour={tour.start}
         />
       )}

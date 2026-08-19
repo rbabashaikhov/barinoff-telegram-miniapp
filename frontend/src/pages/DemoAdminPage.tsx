@@ -71,8 +71,8 @@ export function DemoAdminPage() {
           Превью недоступно
         </h1>
         <p className="lead">Read-only admin preview выключен в конфигурации этого салона.</p>
-        <Link className="btn btn-secondary" to="/">
-          В приложение
+        <Link className="btn btn-secondary" to="/" data-demo-nav="open-client">
+          Открыть приложение клиента
         </Link>
       </div>
     );
@@ -90,8 +90,8 @@ export function DemoAdminPage() {
             Только просмотр. Полная админка защищена и доступна владельцу.
           </p>
         </div>
-        <Link className="btn btn-secondary" to="/">
-          В приложение
+        <Link className="btn btn-secondary" to="/" data-demo-nav="open-client">
+          Открыть приложение клиента
         </Link>
       </div>
 

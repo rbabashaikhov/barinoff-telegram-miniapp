@@ -11,6 +11,7 @@ import { DemoIntro } from './DemoIntro';
 import { DemoTourOverlay } from './DemoTourOverlay';
 import {
   canRunSalesDemoTour,
+  canShowDemoAdminEntry,
   canShowSalesDemoChrome,
   isSalesDemoAdminPath,
   shouldAutoStartTour,
@@ -70,6 +71,13 @@ export function DemoTourProvider({
   const showChrome = canShowSalesDemoChrome({
     ...eligibility,
     demoAdminPreviewEnabled,
+  });
+  const showDemoAdminNav = canShowDemoAdminEntry({
+    isDemo,
+    isTelegram,
+    demoMode: business.demoMode,
+    demoAdminPreviewEnabled,
+    isAdminPath,
   });
 
   const closeTour = useCallback(() => {
@@ -230,10 +238,11 @@ export function DemoTourProvider({
       start,
       skip,
       showChrome,
+      showDemoAdminNav,
       demoTourEnabled,
       demoAdminPreviewEnabled,
     }),
-    [demoAdminPreviewEnabled, demoTourEnabled, showChrome, skip, start],
+    [demoAdminPreviewEnabled, demoTourEnabled, showChrome, showDemoAdminNav, skip, start],
   );
 
   const step = definition.steps[stepIndex];

@@ -4,6 +4,7 @@ export interface DemoTourContextValue {
   start: () => void;
   skip: () => void;
   showChrome: boolean;
+  showDemoAdminNav: boolean;
   demoTourEnabled: boolean;
   demoAdminPreviewEnabled: boolean;
 }

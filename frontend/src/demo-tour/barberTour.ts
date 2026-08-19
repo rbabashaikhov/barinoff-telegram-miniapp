@@ -30,7 +30,7 @@ export const barberDemoTour: DemoTourDefinition = {
       'подтверждение записи',
       'клиентские записи',
     ],
-    adminLabel: 'Посмотреть админку',
+    adminLabel: 'Посмотреть кабинет администратора',
     continueLabel: 'Продолжить как клиент',
     adminHint: 'Также можно посмотреть, как салон управляет расписанием и записями.',
     crmNote: 'Приложение готово к интеграции с CRM/ERP через webhook и integration layer.',

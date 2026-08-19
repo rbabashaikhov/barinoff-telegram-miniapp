@@ -37,3 +37,20 @@ export function canShowSalesDemoChrome(input: {
   }
   return input.demoTourEnabled || input.demoAdminPreviewEnabled;
 }
+
+/** Persistent client → /demo/admin link. Never in Telegram WebView. */
+export function canShowDemoAdminEntry(input: {
+  isDemo: boolean;
+  isTelegram: boolean;
+  demoMode: boolean;
+  demoAdminPreviewEnabled: boolean;
+  isAdminPath: boolean;
+}): boolean {
+  return (
+    input.isDemo &&
+    !input.isTelegram &&
+    input.demoMode &&
+    input.demoAdminPreviewEnabled &&
+    !input.isAdminPath
+  );
+}

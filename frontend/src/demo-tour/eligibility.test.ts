@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   canRunSalesDemoTour,
+  canShowDemoAdminEntry,
   canShowSalesDemoChrome,
   isSalesDemoAdminPath,
   shouldAutoStartTour,
@@ -47,5 +48,37 @@ describe('sales demo eligibility', () => {
     expect(isSalesDemoAdminPath('/admin')).toBe(true);
     expect(isSalesDemoAdminPath('/demo/admin')).toBe(true);
     expect(isSalesDemoAdminPath('/services')).toBe(false);
+  });
+
+  it('shows the demo-admin entry only in public browser sales demo', () => {
+    expect(canShowDemoAdminEntry({ ...demo, demoAdminPreviewEnabled: true })).toBe(true);
+  });
+
+  it('never shows the demo-admin entry inside Telegram WebView', () => {
+    expect(
+      canShowDemoAdminEntry({
+        ...demo,
+        isTelegram: true,
+        demoAdminPreviewEnabled: true,
+      }),
+    ).toBe(false);
+  });
+
+  it('hides the demo-admin entry on admin paths and when preview is off', () => {
+    expect(
+      canShowDemoAdminEntry({
+        ...demo,
+        isAdminPath: true,
+        demoAdminPreviewEnabled: true,
+      }),
+    ).toBe(false);
+    expect(canShowDemoAdminEntry({ ...demo, demoAdminPreviewEnabled: false })).toBe(false);
+    expect(
+      canShowDemoAdminEntry({
+        ...demo,
+        isDemo: false,
+        demoAdminPreviewEnabled: true,
+      }),
+    ).toBe(false);
   });
 });
