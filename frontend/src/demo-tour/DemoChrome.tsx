@@ -16,8 +16,8 @@ export function DemoChrome({ showTour, showAdmin, onStartTour }: DemoChromeProps
         </button>
       )}
       {showAdmin && (
-        <Link className="demo-chrome-link" to="/demo/admin" data-demo-nav="admin-preview">
-          Посмотреть кабинет администратора
+        <Link className="demo-chrome-cta" to="/demo/admin" data-demo-nav="admin-preview">
+          Кабинет администратора
         </Link>
       )}
     </div>

@@ -125,7 +125,7 @@ export function AdminPage() {
           </h1>
         </div>
         <Link className="btn btn-secondary" to="/">
-          В приложение
+          Открыть клиентское приложение
         </Link>
       </div>
 

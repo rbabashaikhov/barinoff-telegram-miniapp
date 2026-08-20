@@ -72,7 +72,7 @@ export function DemoAdminPage() {
         </h1>
         <p className="lead">Read-only admin preview выключен в конфигурации этого салона.</p>
         <Link className="btn btn-secondary" to="/" data-demo-nav="open-client">
-          Открыть приложение клиента
+          Открыть клиентское приложение
         </Link>
       </div>
     );
@@ -91,7 +91,7 @@ export function DemoAdminPage() {
           </p>
         </div>
         <Link className="btn btn-secondary" to="/" data-demo-nav="open-client">
-          Открыть приложение клиента
+          Открыть клиентское приложение
         </Link>
       </div>
 

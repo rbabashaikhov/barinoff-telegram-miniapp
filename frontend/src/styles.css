@@ -514,6 +514,23 @@ button {
   color: var(--accent);
 }
 
+.demo-chrome-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  min-height: 40px;
+  padding: 8px 14px;
+  border: 1px solid var(--accent);
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  text-decoration: none;
+  background: transparent;
+  color: var(--accent);
+  white-space: nowrap;
+}
+
 .demo-admin-banner {
   margin-bottom: 16px;
   padding: 10px 14px;
@@ -720,7 +737,13 @@ button {
   display: flex;
   align-items: center;
   gap: 8px;
-  min-height: 40px;
+  min-height: 44px;
+}
+
+.topbar-back {
+  min-width: 44px;
+  padding: 0 10px;
+  white-space: nowrap;
 }
 
 .topbar h1 {

@@ -9,8 +9,8 @@ export function TopBar({ title, backTo }: TopBarProps) {
   return (
     <div className="topbar">
       {backTo ? (
-        <Link className="btn btn-ghost" to={backTo} aria-label="Назад">
-          ←
+        <Link className="btn btn-ghost topbar-back" to={backTo}>
+          ← Назад
         </Link>
       ) : (
         <span style={{ width: 36 }} />
