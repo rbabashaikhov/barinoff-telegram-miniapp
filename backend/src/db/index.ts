@@ -6,182 +6,183 @@ import type Database from 'better-sqlite3';
 // typical service length, not a number Barinoff publishes. See README/report for the full list.
 // "от NNNN ₽" prices are stored as their base number (NNNN) for the demo; the UI does not
 // currently render an "от" prefix.
+// Descriptions are intentionally short and free of category/master labels — the frontend
+// already shows the category as a section header (frontend/src/catalog/serviceCategories.ts)
+// and filters masters per service, so repeating that in the copy would just be noise.
 const SERVICES = [
   // Стрижки
   {
     name: 'Мужская стрижка',
-    description: 'Классическая мужская стрижка. Категория: Стрижки.',
+    description: 'Классическая мужская стрижка.',
     duration_minutes: 60,
     price: 1800,
   },
   {
     name: 'Стрижка машинкой под одну насадку',
-    description: 'Быстрая стрижка машинкой под одну насадку. Категория: Стрижки.',
+    description: 'Быстрая стрижка машинкой под одну насадку.',
     duration_minutes: 30,
     price: 1000,
   },
   {
     name: 'Окантовка',
-    description: 'Окантовка контура стрижки. Категория: Стрижки.',
+    description: 'Окантовка контура стрижки.',
     duration_minutes: 20,
     price: 500,
   },
   {
     name: 'Коррекция стрижки',
-    description: 'Коррекция ранее сделанной стрижки. Категория: Стрижки.',
+    description: 'Коррекция ранее сделанной стрижки.',
     duration_minutes: 30,
     price: 800,
   },
   {
     name: 'Укладка (мытьё головы + стайлинг)',
-    description: 'Мытьё головы и укладка стайлинговыми средствами. Категория: Стрижки.',
+    description: 'Мытьё головы и укладка стайлинговыми средствами.',
     duration_minutes: 20,
     price: 600,
   },
   {
     name: 'Скрабирование головы',
-    description: 'Очищающий скраб для кожи головы. Категория: Стрижки.',
+    description: 'Очищающий скраб для кожи головы.',
     duration_minutes: 15,
     price: 400,
   },
   // Борода
   {
     name: 'Моделирование бороды',
-    description: 'Моделирование формы бороды. Категория: Борода.',
+    description: 'Моделирование формы бороды.',
     duration_minutes: 45,
     price: 1200,
   },
   {
     name: 'Стрижка бороды, усов',
-    description: 'Стрижка бороды и усов. Категория: Борода.',
+    description: 'Стрижка бороды и усов.',
     duration_minutes: 30,
     price: 800,
   },
   {
     name: 'Камуфляж бороды',
-    description: 'Камуфляж седины в бороде. Категория: Борода.',
+    description: 'Камуфляж седины в бороде.',
     duration_minutes: 45,
     price: 1200,
   },
   // Бритьё и уход
   {
     name: 'Бритьё головы опасной бритвой',
-    description: 'Бритьё головы опасной бритвой. Категория: Бритьё и уход.',
+    description: 'Бритьё головы опасной бритвой.',
     duration_minutes: 40,
     price: 1200,
   },
   {
     name: 'Королевское бритьё опасной бритвой',
-    description: 'Королевское бритьё опасной бритвой с горячим полотенцем. Категория: Бритьё и уход.',
+    description: 'Королевское бритьё опасной бритвой с горячим полотенцем.',
     duration_minutes: 60,
     price: 1500,
   },
   {
     name: 'Уши + нос + брови + щёки + шея',
-    description: 'Комплексная обработка триммером: уши, нос, брови, щёки, шея. Категория: Бритьё и уход.',
+    description: 'Комплексная обработка триммером: уши, нос, брови, щёки, шея.',
     duration_minutes: 40,
     price: 1000,
   },
   {
     name: 'Уши + нос + брови',
-    description: 'Обработка триммером: уши, нос, брови. Категория: Бритьё и уход.',
+    description: 'Обработка триммером: уши, нос, брови.',
     duration_minutes: 25,
     price: 800,
   },
   {
     name: 'Щёки + шея',
-    description: 'Обработка триммером: щёки и шея. Категория: Бритьё и уход.',
+    description: 'Обработка триммером: щёки и шея.',
     duration_minutes: 20,
     price: 600,
   },
   {
     name: 'Нос + уши',
-    description: 'Обработка триммером: нос и уши. Категория: Бритьё и уход.',
+    description: 'Обработка триммером: нос и уши.',
     duration_minutes: 20,
     price: 600,
   },
   {
     name: 'Нос',
-    description: 'Обработка триммером: нос. Категория: Бритьё и уход.',
+    description: 'Обработка триммером: нос.',
     duration_minutes: 15,
     price: 400,
   },
   {
     name: 'Угольная очищающая маска для лица',
-    description: 'Угольная очищающая маска для лица. Категория: Бритьё и уход.',
+    description: 'Угольная очищающая маска для лица.',
     duration_minutes: 25,
     price: 650,
   },
   {
     name: 'Камуфляж седины',
-    description: 'Камуфляж седины. Цена от 1200 ₽ на сайте Barinoff — здесь указана базовая стоимость. Категория: Бритьё и уход.',
+    description: 'Камуфляж седины. На сайте Barinoff цена указана «от 1200 ₽» — здесь базовая стоимость.',
     duration_minutes: 45,
     price: 1200,
   },
   // Комплексы
   {
     name: 'Стрижка + моделирование бороды',
-    description: 'Комплекс: стрижка и моделирование бороды. Категория: Комплексы.',
+    description: 'Комплекс: стрижка и моделирование бороды.',
     duration_minutes: 90,
     price: 2500,
   },
   {
     name: 'Стрижка + угольная маска для лица',
-    description: 'Комплекс: стрижка и угольная маска для лица. Категория: Комплексы.',
+    description: 'Комплекс: стрижка и угольная маска для лица.',
     duration_minutes: 75,
     price: 2000,
   },
   {
     name: 'Стрижка + королевское бритьё',
-    description: 'Комплекс: стрижка и королевское бритьё опасной бритвой. Категория: Комплексы.',
+    description: 'Комплекс: стрижка и королевское бритьё опасной бритвой.',
     duration_minutes: 100,
     price: 2800,
   },
   {
     name: 'Комплекс: стрижка + моделирование бороды + химическая завивка',
     description:
-      'Стрижка, моделирование бороды и химическая завивка. Цена от 5000 ₽ на сайте Barinoff — здесь указана базовая стоимость. Категория: Комплексы.',
+      'Стрижка, моделирование бороды и химическая завивка. На сайте Barinoff цена указана «от 5000 ₽» — здесь базовая стоимость.',
     duration_minutes: 150,
     price: 5000,
   },
   // Детские услуги
   {
     name: 'Детская стрижка (6–12 лет)',
-    description: 'Стрижка для детей от 6 до 12 лет. Категория: Детские услуги.',
+    description: 'Стрижка для детей от 6 до 12 лет.',
     duration_minutes: 45,
     price: 1300,
   },
   {
     name: 'Папа + сын (до 12 лет)',
-    description: 'Стрижка для папы и сына (сыну до 12 лет). Категория: Детские услуги.',
+    description: 'Стрижка для папы и сына (сыну до 12 лет).',
     duration_minutes: 75,
     price: 2500,
   },
   // Плетение (только Полина)
   {
     name: 'Брейдинг',
-    description: 'Брейдинг. Категория: Плетение. Выполняет Полина.',
+    description: 'Брейдинг.',
     duration_minutes: 180,
     price: 8000,
   },
   {
     name: 'Дреды',
-    description:
-      'Плетение дредов. Цена от 6000 ₽ на сайте Barinoff — здесь указана базовая стоимость. Категория: Плетение. Выполняет Полина.',
+    description: 'Плетение дредов. На сайте Barinoff цена указана «от 6000 ₽» — здесь базовая стоимость.',
     duration_minutes: 240,
     price: 6000,
   },
   {
     name: 'Косы',
-    description:
-      'Плетение кос. Цена от 6000 ₽ на сайте Barinoff — здесь указана базовая стоимость. Категория: Плетение. Выполняет Полина.',
+    description: 'Плетение кос. На сайте Barinoff цена указана «от 6000 ₽» — здесь базовая стоимость.',
     duration_minutes: 150,
     price: 6000,
   },
   {
     name: 'Разные виды плетения',
     description:
-      'Другие виды плетения. Цена от 4000 ₽ на сайте Barinoff — здесь указана базовая стоимость. Категория: Плетение. Выполняет Полина.',
+      'Другие виды плетения. На сайте Barinoff цена указана «от 4000 ₽» — здесь базовая стоимость.',
     duration_minutes: 120,
     price: 4000,
   },
@@ -235,12 +236,13 @@ const MASTER_HOURS: Record<string, HoursSpec[]> = {
   Полина: hoursForDays([3, 4, 5, 6, 0], '12:00', '20:00'),
 };
 
-const BARBER_SERVICE_NAMES = SERVICES.filter((s) => s.description.includes('Плетение') === false).map(
-  (s) => s.name,
-);
-const BRAIDING_SERVICE_NAMES = SERVICES.filter((s) => s.description.includes('Категория: Плетение')).map(
-  (s) => s.name,
-);
+// Плетение (braiding) is Полина's exclusive category on barinoffbarber.ru; every other
+// service is performed by both barbers. Listed explicitly (rather than inferred from
+// description text) so the mapping doesn't depend on copy staying in a particular shape.
+const BRAIDING_SERVICE_NAMES = ['Брейдинг', 'Дреды', 'Косы', 'Разные виды плетения'] as const;
+const BARBER_SERVICE_NAMES = SERVICES.filter(
+  (s) => !(BRAIDING_SERVICE_NAMES as readonly string[]).includes(s.name),
+).map((s) => s.name);
 
 const MASTER_SERVICE_NAMES: Record<string, readonly string[]> = {
   Алексей: BARBER_SERVICE_NAMES,
