@@ -1,19 +1,18 @@
-# Telegram Booking Mini App
+# Barinoff Telegram Booking Mini App
 
-CRM-ready Telegram Mini App template for service booking.
+Closed sales-demo Telegram Mini App booking prototype built for **Barinoff** barbershop (Moscow, Митино, Пятницкое шоссе 21 к1) — shown to the shop owner as a cold-outreach prototype. Not client production.
 
-Default demo vertical is a barbershop, but the same codebase is a **single-business white-label**: one deployment = one client. Branding, copy, and CRM connection are configuration, not a rewrite.
+This is a fork of a CRM-ready Telegram Mini App booking template, re-branded end-to-end with Barinoff's real name, address, price list, and masters. The booking engine itself is unmodified.
 
-Live demo: https://telegram-booking-miniapp-production.up.railway.app
+Live demo: see deployment section below.
 
 ## What this is
 
-A production template for:
+A single-business Telegram Mini App booking demo for:
 
-- Barber Booking
-- Beauty Booking
-- Massage Booking
-- other appointment-based service businesses
+- Barinoff barbershop (Митино) — the only vertical this deployment is configured for
+
+The same underlying codebase is a **single-business white-label**: one deployment = one client. Branding, copy, and CRM connection are configuration, not a rewrite.
 
 Flow:
 
@@ -92,7 +91,7 @@ The app POSTs a JSON envelope:
 {
   "event": "booking.created",
   "occurredAt": "2026-08-13T14:22:01.000Z",
-  "business": { "name": "Atelier Cut", "type": "barbershop" },
+  "business": { "name": "BARINOFF", "type": "barbershop" },
   "data": {
     "localAppointmentId": 12,
     "status": "confirmed",
@@ -124,9 +123,9 @@ One deployment = one business. Change env, not the React tree:
 
 | Variable | Default |
 |----------|---------|
-| `BUSINESS_NAME` | `Atelier Cut` |
+| `BUSINESS_NAME` | `BARINOFF` |
 | `BUSINESS_TYPE` | `barbershop` |
-| `APP_TITLE` | `Service Booking` |
+| `APP_TITLE` | `Барбершоп Barinoff` |
 | `APP_DESCRIPTION` | Онлайн-запись… |
 
 Public values are served at `GET /api/config` and used on the home screen.
@@ -244,7 +243,7 @@ SQLite tables:
 
 `applySchema()` is idempotent and backward-safe. Existing Railway files are not wiped. Seed runs only when a catalog table is empty.
 
-First-run seed: 4 services, 5 masters with different service coverage, per-master hours, a demo blocked slot, and a couple of occupied appointments so availability is visibly schedule-based.
+First-run seed: Barinoff's real price list (services grouped by category), the three confirmed masters (Алексей, Роман, Полина) with their real service coverage, per-master hours, a demo blocked slot, and a couple of occupied appointments so availability is visibly schedule-based.
 
 ## Scripts
 
@@ -259,7 +258,7 @@ npm run test
 
 Root `Dockerfile` + `railway.toml`, one service:
 
-1. Connect GitHub repo `telegram-booking-miniapp`.
+1. Connect GitHub repo `barinoff-telegram-miniapp`.
 2. Volume mount `/data`, `DATABASE_PATH=/data/booking.db`.
 3. Env: `NODE_ENV=production`, `APP_URL`, `TZ`, `ALLOW_DEMO_MODE` as needed, a non-empty `ADMIN_TOKEN`, optional `TELEGRAM_BOT_TOKEN`, CRM vars. Demo production keeps `FEATURE_DEMO_TOUR=true` and `FEATURE_DEMO_ADMIN_PREVIEW=true`.
 4. Healthcheck: `GET /api/health`.
