@@ -1,5 +1,7 @@
 import type { Master } from '../types';
 
+// Barinoff has no public individual portrait photos for its masters, so this demo
+// intentionally uses a minimalist initial-based avatar instead of a fabricated stock photo.
 function initials(name: string): string {
   return name
     .split(' ')

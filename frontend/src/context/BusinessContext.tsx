@@ -2,10 +2,10 @@ import { createContext, useContext } from 'react';
 import type { AppConfig } from '../types';
 
 export const DEFAULT_APP_CONFIG: AppConfig = {
-  businessName: 'Atelier Cut',
-  businessType: 'barbershop',
-  appTitle: 'Service Booking',
-  appDescription: 'Онлайн-запись. Выберите услугу, мастера и удобное время.',
+  businessName: 'BARINOFF',
+  businessType: 'барбершоп',
+  appTitle: 'Барбершоп Barinoff',
+  appDescription: 'Мы просто стрижём мужчин и делаем это превосходно.',
   timezone: 'Europe/Moscow',
   demoMode: true,
   adminProtected: false,

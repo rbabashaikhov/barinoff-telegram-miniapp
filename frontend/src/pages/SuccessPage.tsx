@@ -20,7 +20,7 @@ export function SuccessPage() {
           ✓
         </div>
         <h1 className="brand" style={{ fontSize: '2rem' }}>
-          Запись подтверждена
+          Вы записаны в Barinoff
         </h1>
         <p className="lead">Ждём вас в назначенное время.</p>
       </div>
@@ -48,6 +48,10 @@ export function SuccessPage() {
           <div className="summary-row">
             <span>Стоимость</span>
             <span>{formatPrice(appointment.service.price)}</span>
+          </div>
+          <div className="summary-row">
+            <span>Адрес</span>
+            <span>Москва, Пятницкое шоссе, 21 к1, Митино</span>
           </div>
         </div>
       )}

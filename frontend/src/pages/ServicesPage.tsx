@@ -4,6 +4,7 @@ import { api } from '../api/client';
 import { ServiceCard } from '../components/ServiceCard';
 import { TopBar } from '../components/TopBar';
 import { useBooking } from '../context/BookingContext';
+import { groupServicesByCategory } from '../catalog/serviceCategories';
 import type { Service } from '../types';
 
 export function ServicesPage() {
@@ -37,16 +38,23 @@ export function ServicesPage() {
       {loading && <div className="loading">Загрузка…</div>}
       {error && <div className="error-box">{error}</div>}
       {!loading && (
-        <div className="stack" data-demo-tour="service-selection">
-          {services.map((service) => (
-            <ServiceCard
-              key={service.id}
-              service={service}
-              onSelect={(selected) => {
-                setService(selected);
-                navigate('/booking/master');
-              }}
-            />
+        <div className="category-stack" data-demo-tour="service-selection">
+          {groupServicesByCategory(services).map(({ category, services: items }) => (
+            <section key={category} className="category-group">
+              <h2 className="category-title">{category}</h2>
+              <div className="stack">
+                {items.map((service) => (
+                  <ServiceCard
+                    key={service.id}
+                    service={service}
+                    onSelect={(selected) => {
+                      setService(selected);
+                      navigate('/booking/master');
+                    }}
+                  />
+                ))}
+              </div>
+            </section>
           ))}
         </div>
       )}

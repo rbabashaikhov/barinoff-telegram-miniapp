@@ -2,7 +2,7 @@ import type { DemoTourDefinition } from './types';
 
 export const BARBER_DEMO_TOUR_STORAGE_KEY = 'barber.salesDemoTour.v1';
 
-export const DEMO_SERVICE_NAME = 'Оформление бороды';
+export const DEMO_SERVICE_NAME = 'Моделирование бороды';
 
 export const barberDemoTour: DemoTourDefinition = {
   id: 'barber-sales-demo',
