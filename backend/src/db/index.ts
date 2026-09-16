@@ -1,62 +1,213 @@
 import type Database from 'better-sqlite3';
 
+// Real Barinoff price list (barinoffbarber.ru, #price section, verbatim names and prices).
+// `duration_minutes` is NOT published anywhere on the site — the booking engine requires a
+// duration to build time slots, so each value below is a technical demo assumption based on
+// typical service length, not a number Barinoff publishes. See README/report for the full list.
+// "от NNNN ₽" prices are stored as their base number (NNNN) for the demo; the UI does not
+// currently render an "от" prefix.
 const SERVICES = [
+  // Стрижки
   {
     name: 'Мужская стрижка',
-    description: 'Классическая мужская стрижка с укладкой',
+    description: 'Классическая мужская стрижка. Категория: Стрижки.',
+    duration_minutes: 60,
+    price: 1800,
+  },
+  {
+    name: 'Стрижка машинкой под одну насадку',
+    description: 'Быстрая стрижка машинкой под одну насадку. Категория: Стрижки.',
+    duration_minutes: 30,
+    price: 1000,
+  },
+  {
+    name: 'Окантовка',
+    description: 'Окантовка контура стрижки. Категория: Стрижки.',
+    duration_minutes: 20,
+    price: 500,
+  },
+  {
+    name: 'Коррекция стрижки',
+    description: 'Коррекция ранее сделанной стрижки. Категория: Стрижки.',
+    duration_minutes: 30,
+    price: 800,
+  },
+  {
+    name: 'Укладка (мытьё головы + стайлинг)',
+    description: 'Мытьё головы и укладка стайлинговыми средствами. Категория: Стрижки.',
+    duration_minutes: 20,
+    price: 600,
+  },
+  {
+    name: 'Скрабирование головы',
+    description: 'Очищающий скраб для кожи головы. Категория: Стрижки.',
+    duration_minutes: 15,
+    price: 400,
+  },
+  // Борода
+  {
+    name: 'Моделирование бороды',
+    description: 'Моделирование формы бороды. Категория: Борода.',
+    duration_minutes: 45,
+    price: 1200,
+  },
+  {
+    name: 'Стрижка бороды, усов',
+    description: 'Стрижка бороды и усов. Категория: Борода.',
+    duration_minutes: 30,
+    price: 800,
+  },
+  {
+    name: 'Камуфляж бороды',
+    description: 'Камуфляж седины в бороде. Категория: Борода.',
+    duration_minutes: 45,
+    price: 1200,
+  },
+  // Бритьё и уход
+  {
+    name: 'Бритьё головы опасной бритвой',
+    description: 'Бритьё головы опасной бритвой. Категория: Бритьё и уход.',
+    duration_minutes: 40,
+    price: 1200,
+  },
+  {
+    name: 'Королевское бритьё опасной бритвой',
+    description: 'Королевское бритьё опасной бритвой с горячим полотенцем. Категория: Бритьё и уход.',
     duration_minutes: 60,
     price: 1500,
   },
   {
-    name: 'Стрижка + борода',
-    description: 'Стрижка и оформление бороды',
-    duration_minutes: 90,
-    price: 2200,
-  },
-  {
-    name: 'Оформление бороды',
-    description: 'Моделирование и стрижка бороды',
-    duration_minutes: 45,
+    name: 'Уши + нос + брови + щёки + шея',
+    description: 'Комплексная обработка триммером: уши, нос, брови, щёки, шея. Категория: Бритьё и уход.',
+    duration_minutes: 40,
     price: 1000,
   },
   {
-    name: 'Детская стрижка',
-    description: 'Стрижка для детей до 12 лет',
+    name: 'Уши + нос + брови',
+    description: 'Обработка триммером: уши, нос, брови. Категория: Бритьё и уход.',
+    duration_minutes: 25,
+    price: 800,
+  },
+  {
+    name: 'Щёки + шея',
+    description: 'Обработка триммером: щёки и шея. Категория: Бритьё и уход.',
+    duration_minutes: 20,
+    price: 600,
+  },
+  {
+    name: 'Нос + уши',
+    description: 'Обработка триммером: нос и уши. Категория: Бритьё и уход.',
+    duration_minutes: 20,
+    price: 600,
+  },
+  {
+    name: 'Нос',
+    description: 'Обработка триммером: нос. Категория: Бритьё и уход.',
+    duration_minutes: 15,
+    price: 400,
+  },
+  {
+    name: 'Угольная очищающая маска для лица',
+    description: 'Угольная очищающая маска для лица. Категория: Бритьё и уход.',
+    duration_minutes: 25,
+    price: 650,
+  },
+  {
+    name: 'Камуфляж седины',
+    description: 'Камуфляж седины. Цена от 1200 ₽ на сайте Barinoff — здесь указана базовая стоимость. Категория: Бритьё и уход.',
     duration_minutes: 45,
     price: 1200,
   },
+  // Комплексы
+  {
+    name: 'Стрижка + моделирование бороды',
+    description: 'Комплекс: стрижка и моделирование бороды. Категория: Комплексы.',
+    duration_minutes: 90,
+    price: 2500,
+  },
+  {
+    name: 'Стрижка + угольная маска для лица',
+    description: 'Комплекс: стрижка и угольная маска для лица. Категория: Комплексы.',
+    duration_minutes: 75,
+    price: 2000,
+  },
+  {
+    name: 'Стрижка + королевское бритьё',
+    description: 'Комплекс: стрижка и королевское бритьё опасной бритвой. Категория: Комплексы.',
+    duration_minutes: 100,
+    price: 2800,
+  },
+  {
+    name: 'Комплекс: стрижка + моделирование бороды + химическая завивка',
+    description:
+      'Стрижка, моделирование бороды и химическая завивка. Цена от 5000 ₽ на сайте Barinoff — здесь указана базовая стоимость. Категория: Комплексы.',
+    duration_minutes: 150,
+    price: 5000,
+  },
+  // Детские услуги
+  {
+    name: 'Детская стрижка (6–12 лет)',
+    description: 'Стрижка для детей от 6 до 12 лет. Категория: Детские услуги.',
+    duration_minutes: 45,
+    price: 1300,
+  },
+  {
+    name: 'Папа + сын (до 12 лет)',
+    description: 'Стрижка для папы и сына (сыну до 12 лет). Категория: Детские услуги.',
+    duration_minutes: 75,
+    price: 2500,
+  },
+  // Плетение (только Полина)
+  {
+    name: 'Брейдинг',
+    description: 'Брейдинг. Категория: Плетение. Выполняет Полина.',
+    duration_minutes: 180,
+    price: 8000,
+  },
+  {
+    name: 'Дреды',
+    description:
+      'Плетение дредов. Цена от 6000 ₽ на сайте Barinoff — здесь указана базовая стоимость. Категория: Плетение. Выполняет Полина.',
+    duration_minutes: 240,
+    price: 6000,
+  },
+  {
+    name: 'Косы',
+    description:
+      'Плетение кос. Цена от 6000 ₽ на сайте Barinoff — здесь указана базовая стоимость. Категория: Плетение. Выполняет Полина.',
+    duration_minutes: 150,
+    price: 6000,
+  },
+  {
+    name: 'Разные виды плетения',
+    description:
+      'Другие виды плетения. Цена от 4000 ₽ на сайте Barinoff — здесь указана базовая стоимость. Категория: Плетение. Выполняет Полина.',
+    duration_minutes: 120,
+    price: 4000,
+  },
 ] as const;
 
+// Only these three names are confirmed on barinoffbarber.ru. The site gives no individual bios
+// beyond "мастера высокого класса" for Алексей/Роман, and no public portrait photos for anyone —
+// the UI intentionally uses initial-based avatar cards instead of fabricated stock photos.
 const MASTERS = [
   {
-    name: 'Александр',
-    role: 'Senior Barber',
-    description: 'Точные классические стрижки и аккуратная укладка.',
+    name: 'Алексей',
+    role: 'Барбер',
+    description: 'Стрижки, борода, бритьё и уход, комплексы, детские стрижки.',
     display_order: 1,
   },
   {
-    name: 'Максим',
-    role: 'Barber',
-    description: 'Современные мужские стрижки и работа с бородой.',
+    name: 'Роман',
+    role: 'Барбер',
+    description: 'Стрижки, борода, бритьё и уход, комплексы, детские стрижки.',
     display_order: 2,
   },
   {
-    name: 'Артём',
-    role: 'Barber',
-    description: 'Спокойный ритм и чистые линии в каждой стрижке.',
+    name: 'Полина',
+    role: 'Мастер по плетению',
+    description: 'Брейдинг, дреды, косы и другие виды плетения.',
     display_order: 3,
-  },
-  {
-    name: 'Даниил',
-    role: 'Barber',
-    description: 'Уверенная техника и внимание к деталям образа.',
-    display_order: 4,
-  },
-  {
-    name: 'Никита',
-    role: 'Junior Barber',
-    description: 'Аккуратные стрижки и бережное оформление бороды.',
-    display_order: 5,
   },
 ] as const;
 
@@ -76,20 +227,25 @@ function hoursForDays(
   }));
 }
 
+// Barinoff's real opening hours are not published per-master; these schedules are a demo
+// assumption chosen to look like a plausible barbershop rota.
 const MASTER_HOURS: Record<string, HoursSpec[]> = {
-  Александр: hoursForDays([1, 2, 3, 4, 5, 6], '10:00', '20:00'),
-  Максим: hoursForDays([1, 2, 3, 4, 5], '09:00', '18:00'),
-  Артём: hoursForDays([2, 3, 4, 5, 6], '11:00', '21:00'),
-  Даниил: hoursForDays([0, 1, 3, 4, 5, 6], '10:00', '19:00'),
-  Никита: hoursForDays([1, 2, 3, 4, 5], '12:00', '20:00'),
+  Алексей: hoursForDays([1, 2, 3, 4, 5, 6], '10:00', '20:00'),
+  Роман: hoursForDays([2, 3, 4, 5, 6, 0], '11:00', '21:00'),
+  Полина: hoursForDays([3, 4, 5, 6, 0], '12:00', '20:00'),
 };
 
+const BARBER_SERVICE_NAMES = SERVICES.filter((s) => s.description.includes('Плетение') === false).map(
+  (s) => s.name,
+);
+const BRAIDING_SERVICE_NAMES = SERVICES.filter((s) => s.description.includes('Категория: Плетение')).map(
+  (s) => s.name,
+);
+
 const MASTER_SERVICE_NAMES: Record<string, readonly string[]> = {
-  Александр: ['Мужская стрижка', 'Стрижка + борода'],
-  Максим: ['Мужская стрижка', 'Стрижка + борода', 'Оформление бороды'],
-  Артём: ['Мужская стрижка', 'Стрижка + борода', 'Оформление бороды'],
-  Даниил: ['Мужская стрижка', 'Детская стрижка'],
-  Никита: ['Мужская стрижка', 'Оформление бороды', 'Детская стрижка'],
+  Алексей: BARBER_SERVICE_NAMES,
+  Роман: BARBER_SERVICE_NAMES,
+  Полина: BRAIDING_SERVICE_NAMES,
 };
 
 const DEMO_TELEGRAM_USER_ID = 999000001;
@@ -236,10 +392,10 @@ export function seed(db: Database.Database, now = new Date()): void {
   }
 
   const friday = findFutureWeekday(now, 5, 7);
-  const alexander = db.prepare(`SELECT id FROM masters WHERE name = 'Александр'`).get() as
+  const alexey = db.prepare(`SELECT id FROM masters WHERE name = 'Алексей'`).get() as
     | { id: number }
     | undefined;
-  const maxim = db.prepare(`SELECT id FROM masters WHERE name = 'Максим'`).get() as
+  const roman = db.prepare(`SELECT id FROM masters WHERE name = 'Роман'`).get() as
     | { id: number }
     | undefined;
   const haircut = db.prepare(`SELECT id FROM services WHERE name = 'Мужская стрижка'`).get() as
@@ -249,16 +405,16 @@ export function seed(db: Database.Database, now = new Date()): void {
   const blockedCount = db.prepare('SELECT COUNT(*) AS count FROM blocked_slots').get() as {
     count: number;
   };
-  if (blockedCount.count === 0 && alexander) {
+  if (blockedCount.count === 0 && alexey) {
     db.prepare(
       `
       INSERT INTO blocked_slots (master_id, blocked_date, start_time, end_time, reason)
       VALUES (?, ?, '15:00', '16:00', 'Обед')
     `,
-    ).run(alexander.id, friday);
+    ).run(alexey.id, friday);
   }
 
-  if (!haircut || !alexander || !maxim) return;
+  if (!haircut || !alexey || !roman) return;
 
   const demoClientId = upsertClient(db, {
     telegramUserId: DEMO_TELEGRAM_USER_ID,
@@ -283,7 +439,7 @@ export function seed(db: Database.Database, now = new Date()): void {
         client_id, service_id, master_id, appointment_date, start_time, end_time, status
       ) VALUES (?, ?, ?, ?, '11:00', '12:00', 'confirmed')
     `,
-    ).run(demoClientId, haircut.id, alexander.id, friday);
+    ).run(demoClientId, haircut.id, alexey.id, friday);
   }
 
   const occupiedCount = db
@@ -296,6 +452,6 @@ export function seed(db: Database.Database, now = new Date()): void {
         client_id, service_id, master_id, appointment_date, start_time, end_time, status
       ) VALUES (?, ?, ?, ?, '10:00', '11:00', 'confirmed')
     `,
-    ).run(occupiedClientId, haircut.id, maxim.id, friday);
+    ).run(occupiedClientId, haircut.id, roman.id, friday);
   }
 }

@@ -11,7 +11,7 @@ describe('Webhook CRM adapter', () => {
       url: 'https://crm.example/hooks',
       secret,
       timeoutMs: 1000,
-      businessName: 'Atelier Cut',
+      businessName: 'BARINOFF',
       businessType: 'barbershop',
       fetchImpl: (async (url, init) => {
         captured = { url: String(url), init: init ?? {} };

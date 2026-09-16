@@ -36,12 +36,12 @@ export const config = {
   allowDemoMode,
   timezone: process.env.TZ || 'Europe/Moscow',
   business: {
-    name: process.env.BUSINESS_NAME || 'Atelier Cut',
-    type: process.env.BUSINESS_TYPE || 'barbershop',
-    title: process.env.APP_TITLE || 'Service Booking',
+    name: process.env.BUSINESS_NAME || 'BARINOFF',
+    type: process.env.BUSINESS_TYPE || 'барбершоп',
+    title: process.env.APP_TITLE || 'Барбершоп Barinoff',
     description:
       process.env.APP_DESCRIPTION ||
-      'Онлайн-запись. Выберите услугу, мастера и удобное время.',
+      'Мы просто стрижём мужчин и делаем это превосходно.',
   },
   admin: {
     token: (process.env.ADMIN_TOKEN || '').trim(),

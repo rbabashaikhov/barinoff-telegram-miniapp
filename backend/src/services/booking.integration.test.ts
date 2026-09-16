@@ -19,6 +19,7 @@ function setup() {
   return { db, repos: createSqliteRepositories(db) };
 }
 
+// Seed order: Алексей is the first master, works Mon–Sat 10:00–20:00.
 const ALEXANDER = 1;
 const now = new Date(2026, 7, 12, 9, 0, 0);
 
@@ -54,7 +55,7 @@ describe('booking persistence', () => {
     expect(created.start_time).toBe('10:00');
     expect(created.end_time).toBe('11:00');
     expect(created.master_id).toBe(ALEXANDER);
-    expect(created.master_name).toBe('Александр');
+    expect(created.master_name).toBe('Алексей');
 
     const after = getAvailableSlots(repos, 1, ALEXANDER, date, now);
     expect(after).not.toContain('10:00');
@@ -83,13 +84,15 @@ describe('booking persistence', () => {
       }),
     ).rejects.toBeInstanceOf(BookingConflictError);
 
+    // Service 2 ('Стрижка машинкой под одну насадку') is 30 min; start it so it still
+    // overlaps the 12:00–13:00 appointment above regardless of the shorter duration.
     await expect(
       createAppointment(repos, {
         user: { id: 333, username: 'client3', first_name: 'Oleg' },
         serviceId: 2,
         masterId: ALEXANDER,
         date,
-        startTime: '11:00',
+        startTime: '12:30',
         now,
       }),
     ).rejects.toBeInstanceOf(BookingConflictError);

@@ -20,9 +20,12 @@ function setup() {
   return { db, repos: createSqliteRepositories(db) };
 }
 
-const ALEXANDER = 1;
-const MAXIM = 2;
-const ARTEM = 3;
+// Seed order: Алексей, Роман (barbers, all non-braiding services), Полина (braiding only).
+const ALEXEY = 1;
+const ROMAN = 2;
+// Seed order: 'Мужская стрижка' is the first service, 'Брейдинг' is the first braiding-only one.
+const HAIRCUT = 1;
+const BRAIDING = 25;
 const now = new Date(2026, 7, 12, 8, 0, 0);
 
 describe('masters and per-master booking', () => {
@@ -40,69 +43,61 @@ describe('masters and per-master booking', () => {
 
   it('returns seeded active masters', () => {
     const masters = listMasters(repos);
-    expect(masters.map((m) => m.name)).toEqual([
-      'Александр',
-      'Максим',
-      'Артём',
-      'Даниил',
-      'Никита',
-    ]);
+    expect(masters.map((m) => m.name)).toEqual(['Алексей', 'Роман', 'Полина']);
   });
 
   it('filters masters by service', () => {
-    const forHaircut = listMasters(repos, 1);
-    expect(forHaircut).toHaveLength(5);
+    const forHaircut = listMasters(repos, HAIRCUT);
+    expect(forHaircut.map((m) => m.name)).toEqual(['Алексей', 'Роман']);
 
-    const forBeard = listMasters(repos, 3);
-    expect(forBeard.map((m) => m.name)).toEqual(['Максим', 'Артём', 'Никита']);
+    const forBraiding = listMasters(repos, BRAIDING);
+    expect(forBraiding.map((m) => m.name)).toEqual(['Полина']);
 
     db.prepare('DELETE FROM master_services WHERE master_id = ? AND service_id = ?').run(
-      MAXIM,
-      1,
+      ROMAN,
+      HAIRCUT,
     );
-    const filtered = listMasters(repos, 1);
-    expect(filtered.map((m) => m.id)).not.toContain(MAXIM);
-    expect(filtered).toHaveLength(4);
+    const filtered = listMasters(repos, HAIRCUT);
+    expect(filtered.map((m) => m.id)).not.toContain(ROMAN);
+    expect(filtered).toHaveLength(1);
   });
 
   it('availability depends on the selected master schedule', () => {
     const monday = '2026-08-17';
     const sunday = '2026-08-16';
 
-    const alexanderMonday = getAvailableSlots(repos, 1, ALEXANDER, monday, now);
-    const maximMonday = getAvailableSlots(repos, 1, MAXIM, monday, now);
-    const artemMonday = getAvailableSlots(repos, 1, ARTEM, monday, now);
+    // Алексей works Mon–Sat 10:00–20:00; Роман works Tue–Sun 11:00–21:00.
+    const alexeyMonday = getAvailableSlots(repos, HAIRCUT, ALEXEY, monday, now);
+    const romanMonday = getAvailableSlots(repos, HAIRCUT, ROMAN, monday, now);
 
-    expect(alexanderMonday).toContain('10:00');
-    expect(alexanderMonday).toContain('19:00');
-    expect(maximMonday).toContain('09:00');
-    expect(maximMonday).not.toContain('18:00');
-    expect(artemMonday).toEqual([]);
+    expect(alexeyMonday).toContain('10:00');
+    expect(alexeyMonday).toContain('19:00');
+    expect(romanMonday).toEqual([]);
 
-    expect(getAvailableSlots(repos, 1, ALEXANDER, sunday, now)).toEqual([]);
-    expect(getAvailableSlots(repos, 1, 4, sunday, now)).toContain('10:00');
+    expect(getAvailableSlots(repos, HAIRCUT, ALEXEY, sunday, now)).toEqual([]);
+    expect(getAvailableSlots(repos, HAIRCUT, ROMAN, sunday, now)).toContain('11:00');
   });
 
   it('stores master_id on appointment', async () => {
     const created = await createAppointment(repos, {
       user: { id: 10, first_name: 'Ivan' },
-      serviceId: 1,
-      masterId: MAXIM,
-      date: '2026-08-17',
-      startTime: '09:00',
+      serviceId: HAIRCUT,
+      masterId: ROMAN,
+      date: '2026-08-18',
+      startTime: '11:00',
       now,
     });
-    expect(created.master_id).toBe(MAXIM);
-    expect(created.master_name).toBe('Максим');
+    expect(created.master_id).toBe(ROMAN);
+    expect(created.master_name).toBe('Роман');
   });
 
   it('forbids overlap for one master and allows the same slot for another', async () => {
-    const date = '2026-08-17';
+    const date = '2026-08-18';
 
     await createAppointment(repos, {
       user: { id: 11, first_name: 'A' },
-      serviceId: 1,
-      masterId: ALEXANDER,
+      serviceId: HAIRCUT,
+      masterId: ALEXEY,
       date,
       startTime: '12:00',
       now,
@@ -111,8 +106,8 @@ describe('masters and per-master booking', () => {
     await expect(
       createAppointment(repos, {
         user: { id: 12, first_name: 'B' },
-        serviceId: 1,
-        masterId: ALEXANDER,
+        serviceId: HAIRCUT,
+        masterId: ALEXEY,
         date,
         startTime: '12:00',
         now,
@@ -121,36 +116,36 @@ describe('masters and per-master booking', () => {
 
     const other = await createAppointment(repos, {
       user: { id: 13, first_name: 'C' },
-      serviceId: 1,
-      masterId: MAXIM,
+      serviceId: HAIRCUT,
+      masterId: ROMAN,
       date,
       startTime: '12:00',
       now,
     });
-    expect(other.master_id).toBe(MAXIM);
-    expect(getAvailableSlots(repos, 1, MAXIM, date, now)).not.toContain('12:00');
-    expect(getAvailableSlots(repos, 1, ALEXANDER, date, now)).not.toContain('12:00');
+    expect(other.master_id).toBe(ROMAN);
+    expect(getAvailableSlots(repos, HAIRCUT, ROMAN, date, now)).not.toContain('12:00');
+    expect(getAvailableSlots(repos, HAIRCUT, ALEXEY, date, now)).not.toContain('12:00');
   });
 
   it('blocked slot of one master does not block another', () => {
-    const date = '2026-08-17';
+    const date = '2026-08-18';
     db.prepare(
       `
       INSERT INTO blocked_slots (master_id, blocked_date, start_time, end_time, reason)
       VALUES (?, ?, '12:00', '13:00', 'break')
     `,
-    ).run(ALEXANDER, date);
+    ).run(ALEXEY, date);
 
-    expect(getAvailableSlots(repos, 1, ALEXANDER, date, now)).not.toContain('12:00');
-    expect(getAvailableSlots(repos, 1, MAXIM, date, now)).toContain('12:00');
+    expect(getAvailableSlots(repos, HAIRCUT, ALEXEY, date, now)).not.toContain('12:00');
+    expect(getAvailableSlots(repos, HAIRCUT, ROMAN, date, now)).toContain('12:00');
   });
 
   it('cancel restores the slot only for that master', async () => {
-    const date = '2026-08-18';
+    const date = '2026-08-19';
     const created = await createAppointment(repos, {
       user: { id: 20, first_name: 'Anna' },
-      serviceId: 1,
-      masterId: ALEXANDER,
+      serviceId: HAIRCUT,
+      masterId: ALEXEY,
       date,
       startTime: '14:00',
       now,
@@ -158,19 +153,26 @@ describe('masters and per-master booking', () => {
 
     await createAppointment(repos, {
       user: { id: 21, first_name: 'Oleg' },
-      serviceId: 1,
-      masterId: MAXIM,
+      serviceId: HAIRCUT,
+      masterId: ROMAN,
       date,
       startTime: '14:00',
       now,
     });
 
-    expect(getAvailableSlots(repos, 1, ALEXANDER, date, now)).not.toContain('14:00');
-    expect(getAvailableSlots(repos, 1, MAXIM, date, now)).not.toContain('14:00');
+    expect(getAvailableSlots(repos, HAIRCUT, ALEXEY, date, now)).not.toContain('14:00');
+    expect(getAvailableSlots(repos, HAIRCUT, ROMAN, date, now)).not.toContain('14:00');
 
     await cancelAppointment(repos, created.id, 20);
 
-    expect(getAvailableSlots(repos, 1, ALEXANDER, date, now)).toContain('14:00');
-    expect(getAvailableSlots(repos, 1, MAXIM, date, now)).not.toContain('14:00');
+    expect(getAvailableSlots(repos, HAIRCUT, ALEXEY, date, now)).toContain('14:00');
+    expect(getAvailableSlots(repos, HAIRCUT, ROMAN, date, now)).not.toContain('14:00');
+  });
+
+  it('lists only Полина for a braiding-only service', () => {
+    const masters = listMasters(repos, BRAIDING);
+    expect(masters.map((m) => m.name)).toEqual(['Полина']);
+    expect(masters.map((m) => m.id)).not.toContain(ALEXEY);
+    expect(masters.map((m) => m.id)).not.toContain(ROMAN);
   });
 });

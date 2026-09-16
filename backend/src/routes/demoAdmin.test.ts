@@ -131,9 +131,9 @@ describe('demo admin API', () => {
     const masterPayload = masters.json as {
       data: Array<{ name: string; role: string; serviceIds: number[] }>;
     };
-    const maxim = masterPayload.data.find((item) => item.name === 'Максим');
-    expect(maxim?.role).toBe('Barber');
-    expect(maxim?.serviceIds.length).toBeGreaterThan(0);
+    const alexey = masterPayload.data.find((item) => item.name === 'Алексей');
+    expect(alexey?.role).toBe('Барбер');
+    expect(alexey?.serviceIds.length).toBeGreaterThan(0);
 
     const blockedPayload = blocked.json as {
       data: Array<{ masterId: number; date: string; startTime: string }>;
@@ -149,7 +149,7 @@ describe('demo admin API', () => {
       db.prepare(`SELECT name FROM services WHERE name = 'Мужская стрижка'`).get() as { name: string }
     ).name;
     const masterActive = (
-      db.prepare(`SELECT active FROM masters WHERE name = 'Александр'`).get() as { active: number }
+      db.prepare(`SELECT active FROM masters WHERE name = 'Алексей'`).get() as { active: number }
     ).active;
     const hoursCount = (
       db.prepare('SELECT COUNT(*) AS count FROM working_hours').get() as { count: number }
@@ -188,7 +188,7 @@ describe('demo admin API', () => {
       (db.prepare(`SELECT name FROM services WHERE name = 'Мужская стрижка'`).get() as { name: string }).name,
     ).toBe(serviceName);
     expect(
-      (db.prepare(`SELECT active FROM masters WHERE name = 'Александр'`).get() as { active: number }).active,
+      (db.prepare(`SELECT active FROM masters WHERE name = 'Алексей'`).get() as { active: number }).active,
     ).toBe(masterActive);
     expect(
       (db.prepare('SELECT COUNT(*) AS count FROM working_hours').get() as { count: number }).count,

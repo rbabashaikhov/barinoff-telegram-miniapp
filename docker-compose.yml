@@ -13,10 +13,10 @@ services:
       ALLOW_DEMO_MODE: ${ALLOW_DEMO_MODE:-true}
       DATABASE_PATH: /app/data/booking.db
       TZ: ${TZ:-Europe/Moscow}
-      BUSINESS_NAME: ${BUSINESS_NAME:-Atelier Cut}
-      BUSINESS_TYPE: ${BUSINESS_TYPE:-barbershop}
-      APP_TITLE: ${APP_TITLE:-Service Booking}
-      APP_DESCRIPTION: ${APP_DESCRIPTION:-Онлайн-запись. Выберите услугу, мастера и удобное время.}
+      BUSINESS_NAME: ${BUSINESS_NAME:-BARINOFF}
+      BUSINESS_TYPE: ${BUSINESS_TYPE:-барбершоп}
+      APP_TITLE: ${APP_TITLE:-Барбершоп Barinoff}
+      APP_DESCRIPTION: ${APP_DESCRIPTION:-Мы просто стрижём мужчин и делаем это превосходно.}
       ADMIN_TOKEN: ${ADMIN_TOKEN:-}
       FEATURE_DEMO_TOUR: ${FEATURE_DEMO_TOUR:-true}
       FEATURE_DEMO_ADMIN_PREVIEW: ${FEATURE_DEMO_ADMIN_PREVIEW:-true}
